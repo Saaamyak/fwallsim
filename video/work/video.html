@@ -1,0 +1,320 @@
+<!doctype html>
+<html data-theme="jade">
+<head>
+<meta charset="utf-8" />
+<title>FWallSim launch v2</title>
+<!-- The app's own stylesheet: the captured results, Packet Walk, CLI and Lab Guide render exactly as in the app. -->
+<link rel="stylesheet" href="../../src/styles.css" />
+<style>
+  :root { --st-bg: #1d2627; --st-bg2: #263133; --g: #2f8f5b; --g2: #3fbf7a; --red: #e8392f; --ink: #f2f6f6; --mut: #a7baba; }
+  html, body { width: 1920px; height: 1080px; overflow: hidden; margin: 0; background: var(--st-bg); }
+  body { font-family: Lato, 'Segoe UI', 'Helvetica Neue', Arial, sans-serif; color: var(--ink); font-size: 16px; }
+  #stage { position: absolute; inset: 0; overflow: hidden; background: radial-gradient(1300px 760px at 68% 32%, #2b3c3d 0%, var(--st-bg) 62%); }
+  #grid { position: absolute; inset: -80px; background-image: linear-gradient(rgba(63,191,122,.055) 1px, transparent 1px), linear-gradient(90deg, rgba(63,191,122,.055) 1px, transparent 1px); background-size: 80px 80px; }
+  .scene { position: absolute; inset: 0; opacity: 0; }
+  .abs { position: absolute; }
+  .center { left: 0; right: 0; text-align: center; }
+  .copy { position: absolute; left: 110px; width: 560px; }
+  .kicker { font-size: 24px; font-weight: 700; color: var(--g2); letter-spacing: 4px; }
+  .title { font-size: 76px; font-weight: 700; line-height: 1.04; letter-spacing: -1.5px; margin-top: 10px; }
+  .sub { font-size: 32px; color: #c9d6d6; line-height: 1.38; margin-top: 24px; }
+  .sub code { font-family: Consolas, 'SF Mono', Menlo, monospace; font-size: 28px; color: #bfe9cf; }
+  .card { position: absolute; border-radius: 14px; overflow: hidden; background: var(--panel); box-shadow: 0 30px 80px rgba(0,0,0,.5), 0 0 0 1px rgba(255,255,255,.07); }
+  .ui { position: absolute; left: 0; top: 0; transform-origin: 0 0; color: var(--text); font-size: 13px; }
+  .shot { position: absolute; left: 0; top: 0; background-repeat: no-repeat; transform-origin: 0 0; }
+  .vlogo { display: inline-flex; align-items: center; gap: 26px; font-weight: 700; }
+  .vlogo .vf { width: 112px; height: 112px; border-radius: 20px; background: var(--red); color: #fff; display: grid; place-items: center; font-size: 80px; font-weight: 800; }
+  .pill { display: inline-block; font-family: Consolas, 'SF Mono', Menlo, monospace; font-size: 46px; padding: 18px 38px; border-radius: 16px; background: #121819; border: 2px solid var(--g); color: #e8f5ee; }
+  .hl { position: absolute; border: 4px solid var(--g2); border-radius: 10px; box-shadow: 0 0 0 7px rgba(63,191,122,.22); pointer-events: none; }
+  .ring { position: absolute; border-radius: 50%; border: 4px solid var(--g2); }
+  .hook1 { font-size: 64px; font-weight: 700; letter-spacing: -1px; }
+  .hook2 { font-size: 96px; font-weight: 800; color: var(--g2); letter-spacing: -2px; }
+  /* captured parts outside their usual layout */
+  .card .lab-guide { width: auto; border-left: 0; }
+  .card .lab-guide-body { overflow: visible; }
+  .card .result { cursor: default; border-bottom: 0; background: var(--panel); }
+  .card .result.selected { background: var(--panel); }
+  .cli-card .bar { height: 30px; background: #2b3133; color: #dde; display: flex; align-items: center; padding: 0 12px; gap: 6px; font-size: 13px; }
+  .cli-card .console { height: auto; overflow: visible; font-size: 12px; }
+  .cli-card .hot { color: #7fe0a6; font-weight: 700; }
+  .walk-step.glow { border-radius: 6px; }
+</style>
+</head>
+<body>
+<div id="stage">
+  <div id="grid"></div>
+
+  <!-- 1 hook -->
+  <div class="scene" id="s1">
+    <div class="abs center hook1" id="h1" style="top: 250px">Your new firewall just blocked the internet.</div>
+    <div class="card" id="k1" style="left: 300px; top: 420px; width: 1320px; height: 104px"><div class="ui" id="ui1"></div></div>
+    <div class="abs center hook2" id="h2" style="top: 640px">Can you fix it?</div>
+  </div>
+
+  <!-- 2 reveal -->
+  <div class="scene" id="s2">
+    <div class="copy" id="c2" style="top: 300px; width: 860px">
+      <span class="vlogo" style="font-size: 92px"><span class="vf">F</span>FWallSim</span>
+      <div class="title" style="font-size: 64px; margin-top: 40px; white-space: nowrap">Learn firewalls hands-on.</div>
+      <div class="sub">A practice firewall in your browser.<br />No hardware. No trial.</div>
+    </div>
+    <div class="card" id="k2" style="left: 1010px; top: 110px; width: 810px; height: 862px; background: #1f2a2b">
+      <div class="shot" id="img2"></div>
+      <div class="ring" id="ring2" style="opacity: 0"></div>
+    </div>
+  </div>
+
+  <!-- 3 build -->
+  <div class="scene" id="s3">
+    <div class="copy" id="c3" style="top: 300px">
+      <div class="kicker">BUILD</div>
+      <div class="title">Build the policy yourself.</div>
+      <div class="sub">Interfaces, ACCEPT, NAT. Like on a real FortiGate.</div>
+    </div>
+    <div class="card" id="k3" style="left: 780px; top: 110px; width: 1032px; height: 760px">
+      <div class="shot" id="img3"></div>
+      <div class="hl" id="hl3a" style="opacity: 0"></div>
+      <div class="hl" id="hl3b" style="opacity: 0"></div>
+      <div class="ring" id="ring3" style="opacity: 0"></div>
+      <svg id="cursor" width="44" height="44" viewBox="0 0 24 24" style="position: absolute; filter: drop-shadow(0 3px 4px rgba(0,0,0,.4))"><path d="M4 2 L4 20 L9 15.5 L12.5 22 L15.5 20.5 L12 14 L19 14 Z" fill="#fff" stroke="#111" stroke-width="1.4" stroke-linejoin="round"/></svg>
+    </div>
+    <div class="card" id="k3b" style="left: 780px; top: 896px; width: 1032px; height: 78px"><div class="ui" id="ui3"></div></div>
+  </div>
+
+  <!-- 4 packet walk -->
+  <div class="scene" id="s4">
+    <div class="copy" id="c4" style="top: 300px; width: 520px">
+      <div class="kicker">SEE</div>
+      <div class="title">Watch every packet decide.</div>
+      <div class="sub">Route, policy, NAT. Every step in plain words.</div>
+    </div>
+    <div class="card" id="k4" style="left: 700px; top: 90px; width: 1120px; height: 900px"><div class="ui" id="ui4"></div></div>
+  </div>
+
+  <!-- 5 CLI -->
+  <div class="scene" id="s5">
+    <div class="copy" id="c5" style="top: 300px; width: 540px">
+      <div class="kicker">DEBUG</div>
+      <div class="title">Real commands, too.</div>
+      <div class="sub"><code>diagnose debug flow</code>, <code>show</code>, <code>get</code>, Tab to complete.</div>
+    </div>
+    <div class="card cli-card" id="k5" style="left: 720px; top: 280px; width: 1100px; height: 500px; background: var(--code-bg)">
+      <div class="ui" id="ui5"><div id="bar5"></div><div class="console" id="con5"></div></div>
+    </div>
+  </div>
+
+  <!-- 6 labs -->
+  <div class="scene" id="s6">
+    <div class="copy" id="c6" style="top: 300px; width: 620px">
+      <div class="kicker">LEARN</div>
+      <div class="title">19 hands-on labs.</div>
+      <div class="sub">A task ticks green only when it really works.</div>
+    </div>
+    <div class="card" id="k6" style="left: 1000px; top: 80px; width: 792px; height: 920px"><div class="ui" id="ui6"></div></div>
+  </div>
+
+  <!-- 7 outro -->
+  <div class="scene" id="s7">
+    <div class="abs center" id="o1" style="top: 250px"><span class="vlogo" style="font-size: 112px"><span class="vf">F</span>FWallSim</span></div>
+    <div class="abs center" id="o2" style="top: 470px; font-size: 64px; font-weight: 700; letter-spacing: -1px">Learn firewalls by doing.</div>
+    <div class="abs center" id="o3" style="top: 610px"><span class="pill">fwallsim.vercel.app</span></div>
+    <div class="abs center" id="o4" style="top: 790px; font-size: 26px; color: var(--mut)">Free · Runs in your browser · Not affiliated with Fortinet</div>
+  </div>
+</div>
+
+<script>
+  const $ = (id) => document.getElementById(id);
+  const clamp = (x, a = 0, b = 1) => Math.min(b, Math.max(a, x));
+  const seg = (t, a, b) => clamp((t - a) / (b - a));
+  const out3 = (x) => 1 - Math.pow(1 - x, 3);
+  const inout = (x) => (x < 0.5 ? 4 * x * x * x : 1 - Math.pow(-2 * x + 2, 3) / 2);
+  const back = (x) => { const c = 1.6; return 1 + (c + 1) * Math.pow(x - 1, 3) + c * Math.pow(x - 1, 2); };
+  const lerp = (a, b, x) => a + (b - a) * x;
+  const show = (el, a, dy = 0, sc = 1) => { el.style.opacity = a; el.style.transform = `translateY(${dy}px) scale(${sc})`; };
+  const appear = (el, t, a, dur = 0.4, dist = 30) => { const p = out3(seg(t, a, a + dur)); show(el, p, (1 - p) * dist); };
+  const esc = (s) => s.replace(/&/g, '&amp;').replace(/</g, '&lt;');
+  const SCENES = [['s1', 0, 3.2], ['s2', 3.2, 6.6], ['s3', 6.6, 10.4], ['s4', 10.4, 14.2], ['s5', 14.2, 17.0], ['s6', 17.0, 20.2], ['s7', 20.2, 22.91]];
+  const DUR = 22.9;
+  let P; // captured parts
+
+  // fit a captured component into its card: native width = card width / scale
+  function mount(ui, card, html, scale) {
+    ui.innerHTML = html;
+    ui.style.width = card.clientWidth / scale + 'px';
+    ui.style.transform = `scale(${scale})`;
+  }
+
+  // scene 3 geometry (css px of the 1920-wide capture)
+  const O3 = [240, 300], S3 = 1.2;
+  // scene 2: crop around the welcome card
+  let O2, S2 = 1.5;
+  // Lab Guide states
+  let tasks0, tasks4, done4, countEl, done4Full = 0, done4Margin = '0px';
+  // Packet Walk
+  let steps = [], policyStep = -1, walkScale = 1.45;
+  // CLI
+  let cmdLines = [], traceLines = [];
+
+  window.ready = (async () => {
+    P = await (await fetch('shots/parts.json')).json();
+    await Promise.all(['shots/welcome.png', 'shots/policy-edit.png'].map((src) => new Promise((r) => { const i = new Image(); i.onload = r; i.onerror = r; i.src = src; })));
+    // 1 + 3: the real traffic results
+    mount($('ui1'), $('k1'), P.denied, 2.0);
+    mount($('ui3'), $('k3b'), P.allowed, 1.5);
+    // 2: welcome screenshot, cropped around the card
+    const wc = P.welcomeCard;
+    O2 = [wc.x - 40, wc.y - 40];
+    $('img2').style.cssText += `width:3840px;height:2160px;background-image:url(shots/welcome.png);background-size:3840px 2160px;transform:scale(${S2 / 2}) translate(${-O2[0] * 2}px,${-O2[1] * 2}px)`;
+    // 3: policy form screenshot
+    $('img3').style.cssText += `width:3840px;height:3600px;background-image:url(shots/policy-edit.png);background-size:3840px 3600px`;
+    // 4: the real Packet Walk
+    mount($('ui4'), $('k4'), P.walk, walkScale);
+    steps = [...$('ui4').querySelectorAll('.walk-step')];
+    policyStep = steps.findIndex((s) => /Allowed by policy/.test(s.textContent));
+    // 5: real CLI bar; console text typed from the captured session
+    $('bar5').outerHTML = P.cliBar;
+    $('ui5').style.width = $('k5').clientWidth / 1.75 + 'px';
+    $('ui5').style.transform = 'scale(1.75)';
+    const lines = P.cliText.trim().split('\n').filter((l) => !l.startsWith('(note'));
+    cmdLines = lines.filter((l) => / # diagnose/.test(l)).map((l) => l.replace(/^.* # /, ''));
+    traceLines = lines.filter((l) => l.startsWith('id='));
+    // 6: Lab Guide, solved, with the unsolved task rows kept to swap in
+    mount($('ui6'), $('k6'), P.guide4, 2.1);
+    const g0 = document.createElement('div'); g0.innerHTML = P.guide0;
+    tasks0 = [...g0.querySelectorAll('.lab-task')].map((e) => e.outerHTML);
+    tasks4 = [...$('ui6').querySelectorAll('.lab-task')].map((e) => e.outerHTML);
+    done4 = [...$('ui6').querySelectorAll('.lab-guide-body > *')].find((e) => /Lab complete/.test(e.textContent));
+    countEl = [...$('ui6').querySelectorAll('.lab-guide-body .muted')].find((e) => /^Tasks \(/.test(e.textContent));
+    // the footer note is not part of the story; the "Lab complete!" box grows in at the end
+    const foot = [...$('ui6').querySelectorAll('.lab-guide-body > p.muted')].pop();
+    if (foot) foot.style.display = 'none';
+    if (done4) { done4.style.overflow = 'hidden'; done4Full = done4.offsetHeight; done4Margin = getComputedStyle(done4).marginBottom; }
+    $('k6').style.height = Math.min(940, $('ui6').scrollHeight * 2.1) + 'px';
+    $('k6').style.top = (1080 - $('k6').clientHeight) / 2 + 'px';
+    await document.fonts.ready;
+  })();
+
+  let guideK = -1;
+  function guideState(k) {
+    if (k === guideK) return;
+    guideK = k;
+    const rows = [...$('ui6').querySelectorAll('.lab-task')];
+    rows.forEach((r, i) => {
+      const tmp = document.createElement('div');
+      tmp.innerHTML = i < k ? tasks4[i] : tasks0[i];
+      const n = tmp.firstElementChild;
+      n.classList.toggle('current', i === k);
+      r.replaceWith(n);
+    });
+    countEl.textContent = `Tasks (${k}/${tasks4.length})`;
+  }
+
+  window.render = function (t) {
+    $('grid').style.transform = `translate(${-(t * 6) % 80}px, ${-(t * 3) % 80}px)`;
+    for (const [id, a, b] of SCENES) {
+      const fin = id === 's1' ? 1 : seg(t, a, a + 0.3);
+      const fout = id === 's7' ? 1 : 1 - seg(t, b - 0.28, b);
+      $(id).style.opacity = t >= a && t < b ? Math.min(fin, fout) : 0;
+    }
+
+    // 1 hook
+    appear($('h1'), t, 0.1, 0.45);
+    const dp = seg(t, 0.85, 1.1);
+    $('k1').style.opacity = out3(dp);
+    $('k1').style.transform = `scale(${lerp(1.12, 1, out3(dp))})`;
+    $('k1').style.boxShadow = `0 30px 80px rgba(0,0,0,.5), 0 0 0 ${lerp(0, 5, out3(dp)) * (1 - seg(t, 1.1, 1.9))}px rgba(232,57,47,.6)`;
+    const hp = seg(t, 1.7, 2.05);
+    $('h2').style.opacity = out3(hp);
+    $('h2').style.transform = `scale(${lerp(0.86, 1, back(hp))})`;
+
+    // 2 reveal
+    appear($('c2'), t, 3.3, 0.45);
+    appear($('k2'), t, 3.45, 0.5, 50);
+    const gs = P.getStarted;
+    const gx = (gs.x - O2[0]) * S2, gy = (gs.y - O2[1]) * S2, gw = gs.w * S2, gh = gs.h * S2;
+    const rp = seg(t, 4.6, 5.3) > 0 && seg(t, 4.6, 5.3) < 1 ? seg(t, 4.6, 5.3) : seg(t, 5.4, 6.1);
+    const r2 = $('ring2');
+    if (rp > 0 && rp < 1) { r2.style.borderRadius = '12px'; r2.style.left = gx - rp * 18 + 'px'; r2.style.top = gy - rp * 18 + 'px'; r2.style.width = gw + rp * 36 + 'px'; r2.style.height = gh + rp * 36 + 'px'; r2.style.opacity = 1 - rp; } else r2.style.opacity = 0;
+
+    // 3 build
+    appear($('c3'), t, 6.7, 0.45);
+    appear($('k3'), t, 6.8, 0.5, 50);
+    const pan = lerp(0, 40, inout(seg(t, 6.8, 10.4)));
+    $('img3').style.transform = `scale(${S3 / 2}) translate(${-O3[0] * 2}px, ${-(O3[1] + pan) * 2}px)`;
+    const P3 = (x, y) => [(x - O3[0]) * S3, (y - O3[1] - pan) * S3];
+    const acc = P.accept, nt = P.natToggle;
+    const A = P3(acc.x + acc.w / 2, acc.y + acc.h / 2), B = P3(nt.x + nt.w / 2, nt.y + nt.h / 2), start = [880, 700];
+    let cp;
+    if (t < 7.4) cp = start;
+    else if (t < 8.05) { const e = inout(seg(t, 7.4, 8.05)); cp = [lerp(start[0], A[0], e), lerp(start[1], A[1], e)]; }
+    else if (t < 8.55) cp = A;
+    else if (t < 9.1) { const e = inout(seg(t, 8.55, 9.1)); cp = [lerp(A[0], B[0], e), lerp(A[1], B[1], e)]; }
+    else cp = B;
+    const press = (t > 8.07 && t < 8.2) || (t > 9.12 && t < 9.25) ? 0.86 : 1;
+    $('cursor').style.left = cp[0] - 6 + 'px'; $('cursor').style.top = cp[1] - 4 + 'px'; $('cursor').style.transform = `scale(${press})`;
+    const ring = (t0, p) => { const r = seg(t, t0, t0 + 0.45); if (r <= 0 || r >= 1) return false; const el = $('ring3'); const d = 20 + r * 70; el.style.width = el.style.height = d + 'px'; el.style.left = p[0] - d / 2 + 'px'; el.style.top = p[1] - d / 2 + 'px'; el.style.opacity = 1 - r; return true; };
+    if (!ring(8.1, A) && !ring(9.15, B)) $('ring3').style.opacity = 0;
+    const box = (el, t0, r) => { const [x, y] = P3(r.x - 8, r.y - 6); el.style.left = x + 'px'; el.style.top = y + 'px'; el.style.width = (r.w + 16) * S3 + 'px'; el.style.height = (r.h + 12) * S3 + 'px'; el.style.opacity = out3(seg(t, t0, t0 + 0.25)); };
+    box($('hl3a'), 8.15, P.action);
+    box($('hl3b'), 9.2, P.nat);
+    const ap = seg(t, 9.55, 9.9);
+    $('k3b').style.opacity = out3(ap);
+    $('k3b').style.transform = `translateY(${(1 - out3(ap)) * 30}px)`;
+    $('k3b').style.boxShadow = `0 30px 80px rgba(0,0,0,.5), 0 0 0 ${4 * out3(ap)}px rgba(63,191,122,.55)`;
+
+    // 4 packet walk: steps appear one by one, the card follows the newest
+    appear($('c4'), t, 10.5, 0.45);
+    appear($('k4'), t, 10.6, 0.5, 50);
+    let k = 0;
+    steps.forEach((s, i) => { const on = t >= 10.95 + i * 0.13; if (on) k = i + 1; s.style.visibility = on ? 'visible' : 'hidden'; });
+    const last = steps[Math.max(0, k - 1)];
+    const ch = $('k4').clientHeight / walkScale;
+    const want = last ? Math.max(0, last.offsetTop + last.offsetHeight + 24 - ch) : 0;
+    const maxScroll = Math.max(0, $('ui4').scrollHeight - ch);
+    const target = policyStep >= 0 && t > 12.9 ? Math.min(maxScroll, Math.max(0, steps[policyStep].offsetTop - ch * 0.35)) : Math.min(want, maxScroll);
+    $('ui4').style.transform = `scale(${walkScale}) translateY(${-target}px)`;
+    if (policyStep >= 0) {
+      const g = out3(seg(t, 12.9, 13.2));
+      const ps = steps[policyStep];
+      ps.style.background = `rgba(63,191,122,${0.14 * g})`;
+      ps.style.boxShadow = `0 0 0 ${2 * g}px rgba(47,143,91,${0.9 * g})`;
+    }
+
+    // 5 CLI: type the commands, then the trace prints
+    appear($('c5'), t, 14.3, 0.45);
+    appear($('k5'), t, 14.4, 0.5, 50);
+    let txt = '';
+    const T = [[14.6, 15.25], [15.3, 15.8], [15.85, 16.15]];
+    cmdLines.forEach((c, i) => {
+      const p = seg(t, T[i][0], T[i][1]);
+      if (t >= T[i][0]) txt += `FWS60F # ${esc(c.slice(0, Math.round(p * c.length)))}${p < 1 && Math.floor(t * 6) % 2 ? '▌' : ''}\n`;
+    });
+    traceLines.forEach((l, i) => { if (t >= 16.2 + i * 0.07) txt += /Allowed by Policy/.test(l) ? `<span class="hot">${esc(l)}</span>\n` : `${esc(l)}\n`; });
+    if (t >= 16.85) txt += `FWS60F # ${Math.floor(t * 2.5) % 2 ? '▌' : ''}`;
+    $('con5').innerHTML = txt || 'FWS60F # ';
+
+    // 6 labs: tasks tick one by one, then "Lab complete!"
+    appear($('c6'), t, 17.1, 0.45);
+    appear($('k6'), t, 17.2, 0.5, 50);
+    let kk = 0; for (let i = 0; i < 4; i++) if (t >= 17.6 + i * 0.28) kk = i + 1;
+    guideState(kk);
+    const cp6 = out3(seg(t, 18.6, 18.85));
+    if (done4) {
+      done4.style.opacity = cp6;
+      done4.style.height = done4Full * cp6 + 'px';
+      done4.style.marginBottom = cp6 > 0 ? done4Margin : '0px';
+      done4.style.marginTop = cp6 > 0 ? '' : '0px';
+      done4.style.paddingTop = done4.style.paddingBottom = cp6 > 0 ? '' : '0px';
+    }
+    $('ui6').querySelectorAll('.lab-task').forEach((r, i) => { const p = out3(seg(t, 17.6 + i * 0.28, 17.8 + i * 0.28)); r.style.transform = i < kk ? `scale(${lerp(0.97, 1, back(p))})` : 'none'; });
+
+    // 7 outro
+    const op = seg(t, 20.3, 20.75);
+    $('o1').style.opacity = out3(op); $('o1').style.transform = `scale(${lerp(0.85, 1, back(op))})`;
+    appear($('o2'), t, 20.55, 0.4);
+    appear($('o3'), t, 20.8, 0.4);
+    appear($('o4'), t, 21.1, 0.4);
+  };
+</script>
+</body>
+</html>

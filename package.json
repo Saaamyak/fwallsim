@@ -1,0 +1,31 @@
+{
+  "name": "fwallsim",
+  "private": true,
+  "version": "1.0.0",
+  "type": "module",
+  "scripts": {
+    "dev": "vite",
+    "build": "tsc --noEmit && vite build",
+    "typecheck": "tsc --noEmit",
+    "preview": "vite preview",
+    "e2e": "playwright test",
+    "test:engine": "esbuild tests/engine.test.ts --bundle --platform=node --format=cjs --outfile=e2e-results/engine.cjs --log-level=error && node e2e-results/engine.cjs",
+    "test:labs": "esbuild tests/labs.test.ts --bundle --platform=node --format=cjs --outfile=e2e-results/labs.cjs --log-level=error && node e2e-results/labs.cjs",
+    "test": "npm run typecheck && npm run test:engine && npm run test:labs && npm run e2e",
+    "course": "playwright test -c playwright.course.config.ts"
+  },
+  "dependencies": {
+    "@vercel/analytics": "2.0.1",
+    "lucide-react": "0.460.0",
+    "react": "18.3.1",
+    "react-dom": "18.3.1"
+  },
+  "devDependencies": {
+    "@playwright/test": "^1.48.2",
+    "@types/react": "18.3.12",
+    "@types/react-dom": "18.3.1",
+    "@vitejs/plugin-react": "4.3.4",
+    "typescript": "5.6.3",
+    "vite": "5.4.11"
+  }
+}

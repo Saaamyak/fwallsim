@@ -1,0 +1,18 @@
+To start: right-click start-fwallsim.ps1 → Run with PowerShell, or in a terminal in the FWallSim folder:
+
+
+powershell -ExecutionPolicy Bypass -File .\start-fwallsim.ps1
+It runs FWallSim in the background (no window to keep open) and opens it in your browser.
+On the first run it installs everything FWallSim needs, which takes about a minute.
+If FWallSim is already running, it just opens the browser.
+Login is admin with an empty password; you'll be asked to set a new one.
+
+
+
+To stop: stop-fwallsim.ps1, run the same way:
+
+
+powershell -ExecutionPolicy Bypass -File .\stop-fwallsim.ps1
+It also stops FWallSim if you started it with npm run dev.
+If nothing is running, it says so.
+If something goes wrong at startup, look in fwallsim.log in the same folder.

@@ -1,0 +1,33 @@
+# dependencies and build output (the host rebuilds these)
+node_modules
+dist
+
+# test and course build output
+e2e-results
+playwright-report
+course/out
+course/img
+
+# launch video: generated files only (the scripts in video/work are kept)
+video/work/frames
+video/work/stills
+video/work/shots
+video/work/.venv
+video/work/audio.wav
+video-output-*/
+
+# local run files from start-fwallsim.ps1
+.fwallsim.pid
+fwallsim.log
+
+# local settings and anything secret, just in case
+.env
+.env.*
+*.local
+*.pem
+*.key
+.vscode
+.idea
+.DS_Store
+Thumbs.db
+

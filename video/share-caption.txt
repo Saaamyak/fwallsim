@@ -1,0 +1,1 @@
+Your first firewall blocks everything. FWallSim lets you fix it yourself: a FortiGate-style firewall in your browser, a Packet Walk that explains every decision, and 19 hands-on labs that tick green when it really works. Free, no hardware or trial: https://fwallsim.vercel.app
