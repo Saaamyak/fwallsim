@@ -26,7 +26,7 @@ npm test                          # everything (about 6 minutes)
 | `npm run typecheck` | TypeScript type check | no output |
 | `npm run test:engine` | Engine and CLI checks ([tests/engine.test.ts](../tests/engine.test.ts)) | `57 passed, 0 failed` |
 | `npm run test:labs` | Every lab starts unsolved, the reference solution solves it, and the config survives backup/restore ([tests/labs.test.ts](../tests/labs.test.ts)) | `ALL 19 LABS SOLVABLE` |
-| `npm run e2e` | Browser tests in Chromium ([e2e/](../e2e)) | `38 passed` |
+| `npm run e2e` | Browser tests in Chromium ([e2e/](../e2e)) | `41 passed` |
 | `npx playwright test e2e/09-qa.spec.ts` | One browser test file | |
 | `npx playwright test -g "lockout"` | Browser tests whose name matches | |
 

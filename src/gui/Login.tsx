@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react';
-import { ADMIN_SOURCES, changePassword, dismissWelcome, factoryReset, lockedUntil, login, logout, setupAdmin, useStore } from '../store';
+import { ADMIN_SOURCES, changePassword, dismissPhoneNotice, dismissWelcome, factoryReset, lockedUntil, login, logout, setupAdmin, useStore } from '../store';
 import { gobj } from '../engine/config';
 import { APP_VERSION, FW_BUILD, FW_VERSION, MODEL } from '../engine/serialize';
 
@@ -17,6 +17,32 @@ function Brand() {
         {host === MODEL ? host : `${host} · ${MODEL}`} · v{APP_VERSION}
       </div>
     </>
+  );
+}
+
+/** Phones only, before logging in: the full firewall GUI is a desktop tool, so say so once and let them carry on. */
+export function PhoneNotice() {
+  const [copied, setCopied] = useState(false);
+  const copy = () => {
+    navigator.clipboard?.writeText(location.origin).then(() => setCopied(true), () => setCopied(false));
+  };
+  return (
+    <div className="login-bg">
+      <div className="login-card welcome">
+        <Brand />
+        <h1 className="welcome-title">Best on a computer or tablet</h1>
+        <p className="muted">
+          FWallSim is a full firewall interface, like the real one: wide policy tables, long forms and a command line. It works on a phone, but it is cramped.
+        </p>
+        <p className="muted">For the best experience, open <b>{location.host}</b> on a laptop, desktop or tablet.</p>
+        <button className="btn primary" type="button" onClick={dismissPhoneNotice} autoFocus>
+          Continue on this phone
+        </button>
+        <button className="btn" type="button" style={{ marginTop: 8 }} onClick={copy}>
+          {copied ? 'Link copied' : 'Copy link to open later'}
+        </button>
+      </div>
+    </div>
   );
 }
 

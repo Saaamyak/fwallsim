@@ -257,6 +257,23 @@ export function useNow(ms = 1000) {
   return now;
 }
 
+/** Screen widths where the layout changes (keep in step with the @media rules in styles.css). */
+export const TABLET = '(max-width: 1024px)';
+export const PHONE = '(max-width: 760px)';
+
+/** True while the media query matches; updates when the window is resized or rotated. */
+export function useMedia(query: string) {
+  const [match, setMatch] = useState(() => window.matchMedia(query).matches);
+  useEffect(() => {
+    const mq = window.matchMedia(query);
+    const on = () => setMatch(mq.matches);
+    on();
+    mq.addEventListener('change', on);
+    return () => mq.removeEventListener('change', on);
+  }, [query]);
+  return match;
+}
+
 export function EditPage({ title, children, side, onOk, onCancel, okLabel = 'OK' }: { title: ReactNode; children: ReactNode; side?: ReactNode; onOk: () => void; onCancel: () => void; okLabel?: string }) {
   return (
     <div className="page">

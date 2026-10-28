@@ -1,6 +1,6 @@
 # FWallSim v1.0.0 – Manual QA checklist
 
-Automated: `npm test` runs the typecheck, the engine regression suite (57 checks, including CLI robustness and value ranges), lab solvability plus backup/restore round trip (19 labs) and the browser tests (38 Playwright tests in Chromium, including a sweep that opens, edits and saves every page on a fresh and on a busy unit). Use this list for a hands-on pass. Start each section from a factory reset (System > Settings > Factory reset) unless noted.
+Automated: `npm test` runs the typecheck, the engine regression suite (57 checks, including CLI robustness and value ranges), lab solvability plus backup/restore round trip (19 labs) and the browser tests (41 Playwright tests in Chromium, including phone and tablet sizes, including a sweep that opens, edits and saves every page on a fresh and on a busy unit). Use this list for a hands-on pass. Start each section from a factory reset (System > Settings > Factory reset) unless noted.
 
 ## 1. Login and shell
 - [ ] First visit (private window): Welcome screen with the "not affiliated with Fortinet" notice → Get started → Create your admin password → empty and mismatch errors shown → Save and log in → Dashboard opens. Reload after logout: no Welcome again.
@@ -57,7 +57,13 @@ Automated: `npm test` runs the typecheck, the engine regression suite (57 checks
 - [ ] A challenge: hints reveal 1 → 2 → 3 → solution.
 - [ ] Exit lab keeps the config. Restart reloads the lab start.
 
-## 9. Live site (https://fwallsim.vercel.app)
+## 9. Phones and tablets
+- [ ] Phone (or a narrow browser window under 760 px): "Best on a computer or tablet" appears once → Continue on this phone → Welcome. Reload: no notice again.
+- [ ] ☰ opens the menu over the page; choosing a page or tapping outside closes it. Nothing scrolls sideways except wide tables inside their own area.
+- [ ] On a phone, form labels sit above their fields, the Lab panel tabs show icons (tap and hold for names), and the CLI fits the screen.
+- [ ] Tablet (760–1024 px): no notice; the menu slides in; the Lab Guide sits beside the page.
+
+## 10. Live site (https://fwallsim.vercel.app)
 - [ ] After a push, `npx vercel@latest ls fwallsim` shows the newest deployment as Ready.
 - [ ] The live site opens in a private window: login page, no errors in the browser console.
 - [ ] First visit on the live site works (Welcome → Create your admin password → Dashboard).

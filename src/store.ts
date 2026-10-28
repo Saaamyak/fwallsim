@@ -60,6 +60,8 @@ export interface State {
   booting: boolean;
   /** The first-visit Welcome screen has been seen in this browser. */
   welcomed: boolean;
+  /** On a phone: the visitor chose to continue despite the "best on a computer" notice. */
+  phoneOk: boolean;
   /** Bumped when the config changes outside the GUI forms (CLI, restore, scenario, lab), so open pages reload. */
   rev: number;
   /** Top-level config paths changed by that external change. */
@@ -72,6 +74,7 @@ const LS_UI = 'fwallsim.ui.v1';
 const SS_AUTH = 'fwallsim.auth.v1';
 const LS_TRAINING = 'fwallsim.training.v1';
 const LS_WELCOMED = 'fwallsim.welcomed.v1';
+const LS_PHONEOK = 'fwallsim.phoneok.v1';
 
 function load<T>(store: Storage, key: string, fallback: () => T): T {
   try {
@@ -93,6 +96,7 @@ let state: State = {
   toasts: [],
   booting: false,
   welcomed: load(localStorage, LS_WELCOMED, () => false),
+  phoneOk: load(localStorage, LS_PHONEOK, () => false),
   rev: 0,
   revPaths: [],
 };
@@ -116,6 +120,7 @@ function persist(prev: State, next: State) {
     if (prev.auth !== next.auth) sessionStorage.setItem(SS_AUTH, JSON.stringify(next.auth));
     if (prev.training !== next.training) localStorage.setItem(LS_TRAINING, JSON.stringify(next.training));
     if (prev.welcomed !== next.welcomed) localStorage.setItem(LS_WELCOMED, JSON.stringify(next.welcomed));
+    if (prev.phoneOk !== next.phoneOk) localStorage.setItem(LS_PHONEOK, JSON.stringify(next.phoneOk));
   } catch {
     /* storage full or blocked: the app keeps working in memory */
   }
@@ -525,6 +530,10 @@ export function changePassword(pw: string) {
 
 export function dismissWelcome() {
   set({ welcomed: true });
+}
+
+export function dismissPhoneNotice() {
+  set({ phoneOk: true });
 }
 
 /** The unit is factory-fresh: show "Create your admin password" instead of the login form. */

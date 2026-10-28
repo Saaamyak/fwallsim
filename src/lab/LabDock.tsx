@@ -32,8 +32,8 @@ export function LabDock() {
           <FlaskConical size={15} /> Lab
         </span>
         {TABS.map((t) => (
-          <button key={t.id} className={`dock-tab ${tab === t.id && dock !== 'min' ? 'on' : ''}`} onClick={() => setUi({ dockTab: t.id, dock: dock === 'min' ? 'normal' : dock })}>
-            {t.icon} {t.label}
+          <button key={t.id} title={t.label} className={`dock-tab ${tab === t.id && dock !== 'min' ? 'on' : ''}`} onClick={() => setUi({ dockTab: t.id, dock: dock === 'min' ? 'normal' : dock })}>
+            {t.icon} <span className="tab-label">{t.label}</span>
           </button>
         ))}
         <span style={{ flex: 1 }} />

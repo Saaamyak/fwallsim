@@ -1435,3 +1435,127 @@ textarea.inp:focus {
 .lab-task.current {
   border-color: var(--accent);
 }
+
+/* ---------- smaller screens (keep the widths in step with TABLET / PHONE in gui/ui.tsx) ---------- */
+
+/* Tablets: the menu slides in over the page instead of taking its width. */
+@media (max-width: 1024px) {
+  .hdr .brand {
+    width: auto;
+  }
+  .side.side-drawer {
+    position: fixed;
+    top: 44px;
+    bottom: 0;
+    left: 0;
+    width: min(280px, 85vw);
+    z-index: 60;
+    transform: translateX(-100%);
+    visibility: hidden;
+    transition: transform 0.2s ease, visibility 0.2s;
+    box-shadow: 4px 0 18px rgba(0, 0, 0, 0.35);
+  }
+  .side.side-drawer.open {
+    transform: none;
+    visibility: visible;
+  }
+  .side-backdrop {
+    position: fixed;
+    inset: 44px 0 0 0;
+    background: rgba(0, 0, 0, 0.35);
+    z-index: 59;
+  }
+  .lab-guide {
+    width: 300px;
+  }
+  .dock-bar {
+    height: auto;
+    min-height: 32px;
+    flex-wrap: wrap;
+    padding: 2px 4px;
+  }
+  .dock.min {
+    height: auto;
+  }
+}
+
+/* Phones: one column, labels above fields, icon-only Lab tabs, panels that fit the screen. */
+@media (max-width: 760px) {
+  .hdr {
+    gap: 0;
+    padding-right: 4px;
+  }
+  .hdr .brand .hostname,
+  .hdr .hdr-label {
+    display: none;
+  }
+  .page {
+    padding: 10px 10px 20px;
+  }
+  .field {
+    grid-template-columns: 1fr;
+    gap: 4px;
+  }
+  .widgets {
+    grid-template-columns: minmax(0, 1fr);
+  }
+  .widget.span2 {
+    grid-column: auto;
+  }
+  .widget {
+    min-width: 0;
+  }
+  .wrow > :last-child {
+    min-width: 0;
+    text-align: right;
+    overflow-wrap: anywhere;
+  }
+  .content-row {
+    flex-direction: column;
+  }
+  .content {
+    min-height: 0;
+  }
+  .lab-guide {
+    width: auto;
+    max-height: 36%;
+    border-left: 0;
+    border-top: 2px solid var(--accent);
+  }
+  .dock-tab {
+    padding: 0 8px;
+  }
+  .dock-tab .tab-label,
+  .dock-title {
+    display: none;
+  }
+  .dock.normal {
+    height: min(300px, 32vh);
+  }
+  .lab-grid {
+    grid-template-columns: 1fr;
+    height: auto;
+  }
+  .lab-form {
+    border-right: 0;
+    border-bottom: 1px solid var(--border);
+  }
+  .drawer {
+    width: 100vw;
+  }
+  .cli-win {
+    left: 6px;
+    right: 6px;
+    bottom: 6px;
+    width: auto;
+    height: 60vh;
+    max-width: none;
+  }
+  .toasts {
+    left: 12px;
+    right: 12px;
+  }
+  .toast {
+    min-width: 0;
+  }
+}

@@ -5,7 +5,7 @@ import { changePasswordPrompt, logout, navigate, reboot, setUi, useStore, getSta
 import { gobj } from '../engine/config';
 import { adminProfile, MENU_PERM, profilePerms } from '../engine/admin';
 import { APP_VERSION, serializeConfig, parseConfigText } from '../engine/serialize';
-import { Dropdown, Modal, PageBoundary } from './ui';
+import { Dropdown, Modal, PageBoundary, TABLET, useMedia } from './ui';
 import { LabDock } from '../lab/LabDock';
 import { Cli } from './Cli';
 import { StatusDashboard } from './pages/Dashboard';
@@ -133,7 +133,12 @@ export function Layout() {
   const readOnly = Object.values(profilePerms(config, profile)).every((p) => p !== 'read-write');
   const [modal, setModal] = useState<'restore' | 'reboot' | 'about' | null>(null);
   const Page = PAGES[ui.page] ?? ComingSoon;
-  const collapsed = ui.sidebarCollapsed;
+  // On tablets and phones the menu slides in over the page (opened with ☰) instead of taking width.
+  const narrow = useMedia(TABLET);
+  const [navOpen, setNavOpen] = useState(false);
+  useEffect(() => setNavOpen(false), [ui.page, ui.editKey, narrow]);
+  const collapsed = !narrow && ui.sidebarCollapsed;
+  const toggleNav = () => (narrow ? setNavOpen(!navOpen) : setUi({ sidebarCollapsed: !collapsed }));
 
   const backup = () => {
     const txt = serializeConfig(getState().config);
@@ -160,13 +165,13 @@ export function Layout() {
               </span>
             </>
           )}
-          <button className="hdr-btn brand-toggle" onClick={() => setUi({ sidebarCollapsed: !collapsed })} title={collapsed ? 'Expand menu' : 'Collapse menu'}>
+          <button className="hdr-btn brand-toggle" onClick={toggleNav} title={narrow ? (navOpen ? 'Close menu' : 'Open menu') : collapsed ? 'Expand menu' : 'Collapse menu'}>
             <MenuIcon size={18} />
           </button>
         </div>
         <span className="spacer" />
         <button className="hdr-btn" title="Labs & Challenges" onClick={() => navigate('training')}>
-          <GraduationCap size={17} /> <span style={{ fontSize: 12 }}>Labs</span>
+          <GraduationCap size={17} /> <span className="hdr-label" style={{ fontSize: 12 }}>Labs</span>
         </button>
         <button className="hdr-btn" title="CLI Console" onClick={() => setUi({ cliOpen: !ui.cliOpen })}>
           <Terminal size={17} />
@@ -203,9 +208,10 @@ export function Layout() {
         />
       </div>
       <div className="body">
-        <nav className={`side ${collapsed ? 'collapsed' : ''}`}>
+        <nav className={`side ${collapsed ? 'collapsed' : ''} ${narrow ? 'side-drawer' : ''} ${narrow && navOpen ? 'open' : ''}`} aria-hidden={narrow && !navOpen}>
           <Sidebar collapsed={collapsed} />
         </nav>
+        {narrow && navOpen && <div className="side-backdrop" onClick={() => setNavOpen(false)} />}
         <div className="main">
           <div className="content-row">
             <div className="content" ref={contentRef}>

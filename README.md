@@ -152,7 +152,7 @@ Details: [docs/ARCHITECTURE.md → Where data lives](docs/ARCHITECTURE.md#where-
 
 React 18 + TypeScript + Vite 5, with no backend. The simulated firewall (config engine, packet flow, VPN, routing) is plain TypeScript in `src/engine/`, the FortiOS-style CLI is in `src/cli/`, and the labs are in `src/labs/labs.ts`.
 
-**Tests:** run `npx playwright install chromium` once, then `npm test`. That runs the typecheck, the engine checks (57), lab solvability with a backup/restore round trip (19 labs) and the browser tests (38, Chromium). See [docs/HOW-TO.md](docs/HOW-TO.md#run-the-tests).
+**Tests:** run `npx playwright install chromium` once, then `npm test`. That runs the typecheck, the engine checks (57), lab solvability with a backup/restore round trip (19 labs) and the browser tests (41, Chromium, including phone and tablet sizes). See [docs/HOW-TO.md](docs/HOW-TO.md#run-the-tests).
 
 | Document | What's in it |
 |---|---|
@@ -162,7 +162,7 @@ React 18 + TypeScript + Vite 5, with no backend. The simulated firewall (config 
 
 ## Roadmap
 
-Public launch (v1.0.1): the Welcome screen, "Create your admin password", lockout countdown and hashed admin passwords are done. Still to come: small-screen layout, link previews and security headers.
+Public launch (v1.0.1): the Welcome screen, "Create your admin password", lockout countdown, hashed admin passwords and the tablet/phone layout are done. Still to come: link previews and security headers.
 
 v1.1: HA (high availability), VDOMs, traffic shaping and security-profile inspection (antivirus, web filter, IPS, application control). These appear in the menu with a "later" badge.
 

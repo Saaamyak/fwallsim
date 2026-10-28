@@ -133,7 +133,8 @@ Key actions: `updateConfig` (GUI saves, checks permissions), `commitConfig` (CLI
 
 - **Layout.tsx**: the header (brand, hostname, Labs, `>_` CLI, admin menu with Backup/Restore/Reboot), the sidebar filtered by the admin's permissions, the page area (each page wrapped in `PageBoundary` so one broken page can't blank the app; scroll resets on navigation), the Lab panel and the Lab Guide.
 - **menu.ts**: the menu tree. Items not simulated yet have `phase` set and show a "later" badge (they open `ComingSoon`).
-- **ui.tsx**: shared widgets (Field, Toggle, Seg, Modal, Confirm, ContextMenu, Dropdown, PageBoundary, …).
+- **ui.tsx**: shared widgets (Field, Toggle, Seg, Modal, Confirm, ContextMenu, Dropdown, PageBoundary, …) and `useMedia` with the two screen breakpoints, `TABLET` (≤ 1024 px) and `PHONE` (≤ 760 px).
+- **Screen sizes**: desktop is the main target. On tablets the menu becomes a slide-in panel (☰). On phones a one-time notice recommends a computer (`PhoneNotice` in Login.tsx, remembered in `fwallsim.phoneok.v1`). The `@media` block at the end of `styles.css` then stacks forms, puts the Lab Guide under the page, shows icon-only Lab tabs and fits the CLI. Wide tables scroll inside the page area, never the whole page.
 - **picker.tsx**: the FortiOS-style entry picker drawer (choose interfaces, addresses, services).
 - **ObjectList.tsx**, **save.ts**: generic list pages and `saveEntry` (create/rename/update with validation and references).
 - **pages/**: one file per page. List pages edit one entry at a time; settings pages edit one config object and save on Apply.

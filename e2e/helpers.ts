@@ -30,6 +30,8 @@ export async function fresh(page: Page) {
  */
 export async function login(page: Page, user = 'admin', pw = '', newPw = 'Admin123!') {
   await page.locator('.login-card').first().waitFor();
+  const phoneOk = page.getByRole('button', { name: 'Continue on this phone' });
+  if (await phoneOk.isVisible().catch(() => false)) await phoneOk.click();
   const start = page.getByRole('button', { name: 'Get started' });
   if (await start.isVisible().catch(() => false)) await start.click();
   if (await page.getByText('Create your admin password').isVisible().catch(() => false)) {

@@ -1,7 +1,8 @@
 import { useEffect, useRef } from 'react';
 import { gobj } from './engine/config';
 import { getState, logout, needsSetup, tick, useStore } from './store';
-import { Login, ChangePassword, Booting, Setup, Welcome } from './gui/Login';
+import { Login, ChangePassword, Booting, PhoneNotice, Setup, Welcome } from './gui/Login';
+import { PHONE, useMedia } from './gui/ui';
 import { Layout } from './gui/Layout';
 
 export default function App() {
@@ -9,6 +10,8 @@ export default function App() {
   const booting = useStore((s) => s.booting);
   const welcomed = useStore((s) => s.welcomed);
   const fresh = useStore((s) => needsSetup(s.config));
+  const phone = useMedia(PHONE);
+  const phoneOk = useStore((s) => s.phoneOk);
   const theme = useStore((s) => gobj(s.config, 'system global', 'gui-theme'));
   const lastActivity = useRef(Date.now());
 
@@ -35,6 +38,7 @@ export default function App() {
   }, []);
 
   if (booting) return <Booting />;
+  if (!auth.loggedIn && phone && !phoneOk) return <PhoneNotice />;
   if (!auth.loggedIn && fresh) return welcomed ? <Setup /> : <Welcome />;
   if (!auth.loggedIn) return <Login />;
   if (auth.mustChange) return <ChangePassword />;
