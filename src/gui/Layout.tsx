@@ -6,6 +6,7 @@ import { gobj } from '../engine/config';
 import { adminProfile, MENU_PERM, profilePerms } from '../engine/admin';
 import { APP_VERSION, serializeConfig, parseConfigText } from '../engine/serialize';
 import { Dropdown, Modal, PageBoundary, TABLET, useMedia } from './ui';
+import { AboutContent } from './About';
 import { LabDock } from '../lab/LabDock';
 import { Cli } from './Cli';
 import { StatusDashboard } from './pages/Dashboard';
@@ -254,13 +255,7 @@ export function Layout() {
       )}
       {modal === 'about' && (
         <Modal title="About FWallSim" onClose={() => setModal(null)}>
-          <p>
-            <b>FWallSim v{APP_VERSION}</b> is a local FortiGate-style firewall training simulator. Everything runs in your browser. No device, licence or trial is needed.
-          </p>
-          <p>
-            Use the <b>Lab</b> panel at the bottom to send traffic from the simulated PCs, servers and internet hosts. Then read the <b>Packet Walk</b> and <b>Debug Flow</b> to see exactly how the firewall decided.
-          </p>
-          <p className="muted">Includes interfaces, DHCP, routing (static, policy, BGP, OSPF), SD-WAN, policies, objects, NAT/VIP, users and LDAP, IPsec and SSL-VPN, admin hardening, logs, a full CLI and 20 guided labs. Planned for v1.1: HA, VDOMs, traffic shaping and security-profile inspection.</p>
+          <AboutContent />
         </Modal>
       )}
     </div>

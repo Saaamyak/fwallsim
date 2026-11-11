@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react';
 import { ADMIN_SOURCES, changePassword, dismissPhoneNotice, dismissWelcome, factoryReset, lockedUntil, login, logout, setupAdmin, useStore } from '../store';
 import { gobj } from '../engine/config';
 import { APP_VERSION, FW_BUILD, FW_VERSION, MODEL } from '../engine/serialize';
+import { AboutLink } from './About';
 
 const NOT_REAL_PW = "This password only protects the simulator in this browser. Don't reuse a real password.";
 
@@ -66,6 +67,7 @@ export function Welcome() {
         <div className="muted welcome-legal">
           FWallSim is an independent learning tool. It is not affiliated with or endorsed by Fortinet. FortiGate, FortiOS and other Fortinet names are trademarks of Fortinet, Inc., used here only to describe what is simulated.
         </div>
+        <AboutLink />
       </div>
     </div>
   );
@@ -170,6 +172,7 @@ export function Login() {
         >
           Forgot password or locked out? Reset to factory defaults
         </button>
+        <AboutLink />
       </form>
     </div>
   );

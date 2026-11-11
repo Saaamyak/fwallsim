@@ -26,7 +26,7 @@ npm test                          # everything (about 6 minutes)
 | `npm run typecheck` | TypeScript type check | no output |
 | `npm run test:engine` | Engine and CLI checks ([tests/engine.test.ts](../tests/engine.test.ts)) | `64 passed, 0 failed` |
 | `npm run test:labs` | Every lab starts unsolved, the reference solution solves it, and the config survives backup/restore ([tests/labs.test.ts](../tests/labs.test.ts)) | `ALL 20 LABS SOLVABLE` |
-| `npm run e2e` | Browser tests in Chromium ([e2e/](../e2e)) | `41 passed` |
+| `npm run e2e` | Browser tests in Chromium ([e2e/](../e2e)) | `44 passed` |
 | `npx playwright test e2e/09-qa.spec.ts` | One browser test file | |
 | `npx playwright test -g "lockout"` | Browser tests whose name matches | |
 
@@ -107,6 +107,8 @@ FWallSim is a static site (no server, no database), so any free static host work
 | Live site | https://fwallsim.vercel.app |
 | Code | https://github.com/Saaamyak/fwallsim (public, branch `main`) |
 | Host | Vercel (free Hobby plan), connected to the GitHub repo: Vite preset, `npm run build`, output `dist` |
+
+**Security headers and preview card:** `vercel.json` sets the security headers (Content-Security-Policy, no framing, nosniff, referrer and permissions policies) and sends unknown addresses to the app. The link preview card is `public/og.png`; rebuild it and the icons with `node docs/make-og-image.cjs`. If you add anything that loads from another site (fonts, scripts, images), the Content-Security-Policy in `vercel.json` must allow it, or the browser blocks it.
 
 **Update the live site:** commit and `git push`. Vercel builds and publishes in about 15 seconds. Run `npm test` before pushing.
 

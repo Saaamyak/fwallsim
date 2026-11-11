@@ -172,7 +172,7 @@ Each lab: `id`, `title`, `level`, `minutes`, `topic`, `intro`, `build()` (start 
 
 ## 10. Hosting
 
-The public GitHub repo is connected to a Vercel project (Vite preset, `npm run build`, output `dist`). Each push to `main` builds and publishes https://fwallsim.vercel.app in about 15 seconds. Vercel's long per-deploy preview links sit behind a Vercel login by default; the main address is public.
+The public GitHub repo is connected to a Vercel project (Vite preset, `npm run build`, output `dist`). Each push to `main` builds and publishes https://fwallsim.vercel.app in about 15 seconds. Vercel's long per-deploy preview links sit behind a Vercel login by default; the main address is public. `vercel.json` adds security headers (a strict Content-Security-Policy: everything from the same site only, no framing) and serves the app for unknown paths. `index.html` carries the description and the link-preview tags (Open Graph, Twitter card) pointing at `public/og.png`; `public/` also holds the icons, `robots.txt` and `sitemap.xml`. The About panel (`src/gui/About.tsx`) explains what is stored where.
 
 ## Ports
 

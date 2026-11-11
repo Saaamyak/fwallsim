@@ -1559,3 +1559,30 @@ textarea.inp:focus {
     min-width: 0;
   }
 }
+.about-link {
+  margin-top: 10px;
+  font-size: 11px;
+  background: none;
+  border: 0;
+  color: var(--accent, #2f8f5b);
+  cursor: pointer;
+  padding: 0;
+  text-align: left;
+  align-self: flex-start;
+}
+.about h4 {
+  margin: 14px 0 4px;
+}
+.about ul {
+  margin: 0 0 10px;
+  padding-left: 18px;
+  line-height: 1.6;
+}
+.about-legal {
+  font-size: 11px;
+  line-height: 1.6;
+}
+.login-card .modal {
+  color: var(--text);
+  text-align: left;
+}

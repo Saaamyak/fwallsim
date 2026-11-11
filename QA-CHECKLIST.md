@@ -1,6 +1,6 @@
 # FWallSim v1.0.0 – Manual QA checklist
 
-Automated: `npm test` runs the typecheck, the engine regression suite (64 checks, including CLI robustness and value ranges), lab solvability plus backup/restore round trip (20 labs) and the browser tests (41 Playwright tests in Chromium, including phone and tablet sizes, including a sweep that opens, edits and saves every page on a fresh and on a busy unit). Use this list for a hands-on pass. Start each section from a factory reset (System > Settings > Factory reset) unless noted.
+Automated: `npm test` runs the typecheck, the engine regression suite (64 checks, including CLI robustness and value ranges), lab solvability plus backup/restore round trip (20 labs) and the browser tests (44 Playwright tests in Chromium, including phone and tablet sizes, including a sweep that opens, edits and saves every page on a fresh and on a busy unit). Use this list for a hands-on pass. Start each section from a factory reset (System > Settings > Factory reset) unless noted.
 
 ## 1. Login and shell
 - [ ] First visit (private window): Welcome screen with the "not affiliated with Fortinet" notice → Get started → Create your admin password → empty and mismatch errors shown → Save and log in → Dashboard opens. Reload after logout: no Welcome again.
@@ -67,6 +67,9 @@ Automated: `npm test` runs the typecheck, the engine regression suite (64 checks
 - [ ] After a push, `npx vercel@latest ls fwallsim` shows the newest deployment as Ready.
 - [ ] The live site opens in a private window: login page, no errors in the browser console.
 - [ ] First visit on the live site works (Welcome → Create your admin password → Dashboard).
+- [ ] Paste https://fwallsim.vercel.app into LinkedIn, WhatsApp or Slack: the preview card shows the FWallSim image, title and description.
+- [ ] Header Help, and "About & privacy" on the Welcome and login screens, open the About panel with "Your data" and the GitHub link.
+- [ ] Browser dev tools → Console on the live site: no "Content Security Policy" errors.
 - [ ] Two browsers have separate simulators: a change in one does not appear in the other.
 - [ ] Backup on the live site → Restore on http://localhost:5173 brings the same configuration.
 
