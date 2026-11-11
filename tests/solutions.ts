@@ -65,11 +65,13 @@ export const SOL: Record<string, () => void> = {
       'config system sdwan', 'set status enable', 'config zone', 'edit virtual-wan-link', 'next', 'end',
       'config members', 'edit 2', 'set interface wan2', 'set gateway 198.18.10.1', 'next', 'end', 'end',
       ...pol('1', ['set dstintf virtual-wan-link']),
+      ...pol('2', ['set srcintf virtual-wan-link']),
       ...pol('3', ['set dstintf virtual-wan-link']),
       'config system sdwan', 'config members', 'edit 1', 'set interface wan1', 'set gateway 203.0.113.1', 'next', 'end',
       'config health-check', 'edit G', 'set server 8.8.8.8', 'set members 1 2', 'config sla', 'edit 1', 'set latency-threshold 50', 'next', 'end', 'next', 'end', 'end',
       'config router static', 'edit 0', 'set sdwan-zone virtual-wan-link', 'next', 'end',
     ]);
+    store.sendTraffic({ srcHost: 'user', dst: '203.0.113.10', proto: 'tcp', dport: 80 });
     store.updateLab((l) => ({ ...l, ispDown: { wan1: true } }));
   },
   'l13-dynamic': () =>
@@ -84,6 +86,7 @@ export const SOL: Record<string, () => void> = {
   'c3-website': () => run(['config firewall vip', 'edit VIP-WebServer-HTTP', 'set mappedip 10.10.10.10', 'next', 'end']),
   'c4-dhcp': () => run(['config system dhcp server', 'edit 2', 'config ip-range', 'edit 1', 'set end-ip 192.168.1.210', 'next', 'end', 'next', 'end']),
   'c5-branch': () => run(['config vpn ipsec phase1-interface', 'edit to-branch', 'set psksecret Branch-PSK-2026', 'next', 'end', 'config router static', 'edit 0', 'set dst 10.20.0.0/24', 'set device to-branch', 'next', 'end']),
+  'c7-return-route': () => run(['config router static', 'edit 2', 'unset gateway', 'set device to-branch', 'next', 'end']),
   'c6-failover': () => run(['config system sdwan', 'config health-check', 'edit Internet', 'set server 8.8.8.8', 'set members 1 2', 'next', 'end', 'end']),
 };
 

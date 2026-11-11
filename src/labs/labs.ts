@@ -87,11 +87,31 @@ function sdwanBase(c: Config, hcServer = '8.8.8.8'): Config {
   };
   tableOf(c, 'router static').entries.push({ key: String(entries(c, 'router static').length + 1), f: { 'sdwan-zone': ['virtual-wan-link'] } });
   for (const p of entries(c, 'firewall policy')) {
-    const d = p.f.dstintf;
-    if (Array.isArray(d) && d.includes('wan1')) p.f.dstintf = ['virtual-wan-link'];
+    for (const k of ['srcintf', 'dstintf']) {
+      const v = p.f[k];
+      if (Array.isArray(v) && v.includes('wan1')) p.f[k] = ['virtual-wan-link'];
+    }
   }
   return c;
 }
+
+const port80 = (v: string[]) => /^80(-80)?$/.test(v.join(' ').trim());
+// l5: the VIP that publishes Web-Server on wan1 port 80 only
+const webVip = (f: Fields) => {
+  const d = def('firewall vip');
+  return list(d, f, 'mappedip')[0] === '10.10.10.10' && list(d, f, 'extip').some((e) => e.includes('203.0.113.10')) && str(d, f, 'extintf') === 'wan1' && str(d, f, 'portforward') === 'enable' && str(d, f, 'protocol') === 'tcp' && port80(list(d, f, 'extport')) && port80(list(d, f, 'mappedport'));
+};
+
+// l11: user groups with at least one local user, and the groups named in SSL-VPN authentication rules
+const vpnGroups = (c: Config) => entries(c, 'user group').filter((g) => list(def('user group'), g.f, 'member').some((m) => !!find(c, 'user local', m))).map((g) => g.key);
+const sslRuleGroups = (c: Config) => {
+  const o = c['vpn ssl settings'];
+  const ruleDef = def('vpn ssl settings').fields.find((f) => f.name === 'authentication-rule')!.sub!;
+  const portalDef = def('vpn ssl web portal');
+  return (o?.kind === 'object' ? sub(o.f, 'authentication-rule')?.entries ?? [] : [])
+    .filter((r) => { const p = find(c, 'vpn ssl web portal', str(ruleDef, r.f, 'portal')); return !!p && str(portalDef, p.f, 'tunnel-mode') === 'enable'; })
+    .flatMap((r) => list(ruleDef, r.f, 'groups'));
+};
 
 const routeActive = (x: CheckCtx, prefix: string, type?: string) => {
   const n = parseIpMask(prefix)!;
@@ -103,7 +123,7 @@ const routeActive = (x: CheckCtx, prefix: string, type?: string) => {
 export const LABS: Lab[] = [
   {
     id: 'l1-basics',
-    title: 'First login and system basics',
+    title: 'System basics',
     level: 'Beginner',
     minutes: 10,
     topic: 'GUI, System settings, local-in',
@@ -188,10 +208,10 @@ export const LABS: Lab[] = [
     },
     startPage: 'pol-vip',
     tasks: [
-      { title: 'Create a VIP: wan1 203.0.113.10 TCP/80 → 10.10.10.10:80', how: 'Policy & Objects > Virtual IPs > Create New. Interface wan1, External IP 203.0.113.10, Map to 10.10.10.10, Port Forwarding TCP 80 → 80.', check: (x) => entries(x.c, 'firewall vip').some((v) => list(def('firewall vip'), v.f, 'mappedip')[0] === '10.10.10.10') },
+      { title: 'Create a VIP: wan1 203.0.113.10 TCP/80 → 10.10.10.10:80', how: 'Policy & Objects > Virtual IPs > Create New. Interface wan1, External IP 203.0.113.10, Map to 10.10.10.10, Port Forwarding TCP 80 → 80.', check: (x) => entries(x.c, 'firewall vip').some((v) => webVip(v.f)) },
       { title: 'Create the inbound policy wan1 → dmz with the VIP as destination', how: 'Firewall Policy > Create New: Incoming wan1, Outgoing dmz, Source all, Destination = your VIP, Service HTTP, ACCEPT, NAT off.', check: (x) => pols(x.c).some((p) => p.action === 'accept' && p.srcintf.includes('wan1') && p.dstintf.includes('dmz') && p.dstaddr.some((d) => !!find(x.c, 'firewall vip', d))) },
       { title: 'Internet-User reaches http://203.0.113.10', how: 'Quick test "Internet user visits your website". The Packet Walk shows the DNAT step.', check: (x) => sendOk(x, 'user', '203.0.113.10', 'tcp', 80) },
-      { title: 'SSH from the internet to the web server is still impossible', how: 'Send Attacker → 203.0.113.10 TCP/22. Only port 80 is forwarded.', check: (x) => !sendOk(x, 'attacker', '203.0.113.10', 'tcp', 22) },
+      { title: 'SSH to 203.0.113.10 from the internet is still blocked', how: 'Send Attacker → 203.0.113.10 TCP/22. Only port 80 is forwarded to the web server, and SSH is not allowed on wan1.', check: (x) => !sendOk(x, 'attacker', '203.0.113.10', 'tcp', 22) },
     ],
   },
   {
@@ -206,12 +226,12 @@ export const LABS: Lab[] = [
       addAddr(c, 'PC2', '192.168.1.111 255.255.255.255');
       addAddr(c, 'YouTube-IP', '142.250.183.14 255.255.255.255');
       lanOut(c);
-      addPolicy(c, { name: 'Block-PC2-YouTube', srcintf: ['internal'], dstintf: ['wan1'], action: 'deny', srcaddr: ['PC2'], dstaddr: ['YouTube-IP'], service: ['HTTPS'], logtraffic: 'all' });
+      addPolicy(c, { name: 'Block-PC2-YouTube', srcintf: ['internal'], dstintf: ['wan1'], action: 'deny', srcaddr: ['PC2'], dstaddr: ['YouTube-IP'], service: ['HTTP', 'HTTPS'], logtraffic: 'all' });
       return c;
     },
     startPage: 'pol-policy',
     tasks: [
-      { title: 'PC2 can no longer reach YouTube', how: 'Policies are checked top to bottom and the first match wins. Use By Sequence view and drag the block policy above LAN-to-Internet (or right-click > Move up).', check: (x) => !sendOk(x, 'pc2', 'www.youtube.com') },
+      { title: 'PC2 can no longer reach YouTube (HTTP or HTTPS)', how: 'Policies are checked top to bottom and the first match wins. Use By Sequence view and drag the block policy above LAN-to-Internet (or right-click > Move up). Then test PC2 → www.youtube.com on TCP/443 and TCP/80.', check: (x) => !sendOk(x, 'pc2', 'www.youtube.com') && !sendOk(x, 'pc2', 'www.youtube.com', 'tcp', 80) },
       { title: 'PC1 can still reach YouTube', how: 'Send PC1 → www.youtube.com.', check: (x) => sendOk(x, 'pc1', 'www.youtube.com') },
       { title: 'PC2 can still browse other sites', how: 'Send PC2 → www.example.com.', check: (x) => sendOk(x, 'pc2', 'www.example.com') },
     ],
@@ -237,7 +257,7 @@ export const LABS: Lab[] = [
     level: 'Intermediate',
     minutes: 20,
     topic: 'Admin profiles, trusted hosts, local-in policy',
-    intro: 'HTTPS and SSH admin access are open on wan1 to the whole internet. Lock it down: an auditor account limited to the LAN, admin HTTPS only from the office IP (Internet-User, 198.51.100.77), and no SSH from outside.',
+    intro: 'HTTPS and SSH admin access are open on wan1 to the whole internet. Lock it down: an auditor account limited to the LAN, admin HTTPS only from the admin\'s home office (Internet-User, 198.51.100.77), and no SSH from outside.',
     build: () => {
       const c = starterConfig();
       const w = find(c, 'system interface', 'wan1')!;
@@ -248,7 +268,7 @@ export const LABS: Lab[] = [
     tasks: [
       { title: 'Create admin "auditor" with a profile that can change nothing', how: 'System > Admin Profiles > Create New (set all to Read), then System > Administrators > Create New "auditor" with that profile.', check: (x) => !!find(x.c, 'system admin', 'auditor') && Object.values(profilePerms(x.c, adminProfile(x.c, 'auditor'))).every((p) => p !== 'read-write') },
       { title: 'auditor may only log in from the LAN (192.168.1.0/24)', how: 'Edit auditor > Restrict login to trusted hosts > 192.168.1.0/24.', check: (x) => { const t = trustedHosts(x.c, 'auditor'); return t.length > 0 && t.every((h) => { const n = parseIpMask(h); return !!n && inNet(n.ip, ipToInt('192.168.1.0')!, 24) && n.prefix >= 24; }); } },
-      { title: 'Admin HTTPS on wan1: office yes, Attacker no', how: 'Policy & Objects > Local-In Policy: accept HTTPS from an address 198.51.100.77/32 on wan1, then deny HTTPS from all on wan1.', check: (x) => sendOk(x, 'user', '203.0.113.10', 'tcp', 443) && !sendOk(x, 'attacker', '203.0.113.10', 'tcp', 443) },
+      { title: 'Admin HTTPS on wan1: home office yes, Attacker no', how: 'First create an address object in Policy & Objects > Addresses (e.g. Admin-Home = 198.51.100.77/32). Then Policy & Objects > Local-In Policy: accept HTTPS from Admin-Home on wan1, and below it deny HTTPS from all on wan1.', check: (x) => sendOk(x, 'user', '203.0.113.10', 'tcp', 443) && !sendOk(x, 'attacker', '203.0.113.10', 'tcp', 443) },
       { title: 'Nobody can SSH to wan1 from the internet', how: 'Remove SSH from wan1 Administrative Access (or add a local-in deny for SSH).', check: (x) => !sendOk(x, 'user', '203.0.113.10', 'tcp', 22) && !sendOk(x, 'attacker', '203.0.113.10', 'tcp', 22) },
     ],
   },
@@ -263,7 +283,7 @@ export const LABS: Lab[] = [
     startPage: 'usr-ldap',
     tasks: [
       { title: 'An LDAP server object connects to AD successfully', how: 'User & Authentication > LDAP Servers > Create New, then Test Connectivity until it says Successful.', check: (x) => entries(x.c, 'user ldap').some((e) => ldapCheck(x.c, e.key).ok) },
-      { title: 'A user group contains the LDAP server, limited to CN=Sales', how: 'User Groups > Create New: Members = your LDAP server, Remote Groups: CN=Sales,OU=Groups,DC=lab,DC=local.', check: (x) => entries(x.c, 'user group').some((g) => (sub(g.f, 'match')?.entries ?? []).some((m) => str(def('user group').fields.find((f) => f.name === 'match')!.sub!, m.f, 'group-name').toLowerCase().startsWith('cn=sales'))) },
+      { title: 'A user group contains the LDAP server, limited to CN=Sales', how: 'User Groups > Create New: Members = your LDAP server, Remote Groups: CN=Sales,OU=Groups,DC=lab,DC=local.', check: (x) => entries(x.c, 'user group').some((g) => list(def('user group'), g.f, 'member').some((m) => !!find(x.c, 'user ldap', m)) && (sub(g.f, 'match')?.entries ?? []).some((m) => str(def('user group').fields.find((f) => f.name === 'match')!.sub!, m.f, 'group-name').toLowerCase().startsWith('cn=sales'))) },
       { title: 'Policy 1 requires that group', how: 'Edit policy 1 > Source: add the user group next to LAN-Subnet.', check: (x) => (policies(x.c).find((p) => p.id === '1')?.groups.length ?? 0) > 0 },
       { title: 'jsmith logs in on PC1 and can browse', how: 'Lab > Users: PC1, jsmith / Sales123!, Log in. Then send PC1 → www.example.com. Note: before login even DNS is refused, because DNS cannot show a login page. In production, add a DNS-only policy without groups above this one.', check: (x) => Object.values(x.rt.lab.auth).some((a) => a.user === 'jsmith' && a.groups.length > 0) && sendOk(x, 'pc1', 'www.example.com') },
       { title: 'adoe (Engineering) logs in on PC2 and is refused', how: 'Lab > Users: PC2, adoe / Eng123!. Then send PC2 → www.example.com. It must fail.', check: (x) => Object.values(x.rt.lab.auth).some((a) => a.user === 'adoe') && !sendOk(x, 'pc2', 'www.example.com') },
@@ -290,13 +310,16 @@ export const LABS: Lab[] = [
     title: 'SSL-VPN for remote workers',
     level: 'Advanced',
     minutes: 25,
-    topic: 'SSL-VPN settings, portals, ssl.root policy, split tunneling',
+    topic: 'SSL-VPN settings, portals, ssl.root policy',
     intro: 'Remote staff need FortiClient access to the office PCs. Create a local user, a group, SSL-VPN settings on wan1 and the ssl.root policy, then connect Remote-Laptop.',
     build: starterConfig,
     startPage: 'vpn-sslsettings',
     tasks: [
       { title: 'SSL-VPN listens on wan1 on a port other than the admin HTTPS port', how: 'VPN > SSL-VPN Settings: Listen on wan1, port 10443.', check: (x) => { const o = x.c['vpn ssl settings']; const f = o?.kind === 'object' ? o.f : {}; return list(def('vpn ssl settings'), f, 'source-interface').includes('wan1') && str(def('vpn ssl settings'), f, 'port') !== gobj(x.c, 'system global', 'admin-sport'); } },
-      { title: 'Remote-Laptop is connected with FortiClient', how: 'Create a user and group, an authentication rule (portal tunnel-access), a policy ssl.root → internal with the group, then Lab > VPN > Connect.', check: (x) => !!x.rt.lab.sslClients?.laptop },
+      { title: 'A local user is in a user group', how: 'User & Authentication > User Definition > Create New (Local User, with a password). Then User Groups > Create New (Firewall) and add the user as a member.', check: (x) => vpnGroups(x.c).length > 0 },
+      { title: 'An authentication rule maps that group to a tunnel-mode portal', how: 'VPN > SSL-VPN Settings > Authentication/Portal Mapping > Create New: your group, portal tunnel-access. That portal uses split tunneling, so only office traffic goes through the VPN and the laptop reaches the internet directly.', check: (x) => sslRuleGroups(x.c).some((g) => vpnGroups(x.c).includes(g)) },
+      { title: 'A policy ssl.root → internal allows that group', how: 'Firewall Policy > Create New: Incoming SSL-VPN tunnel interface (ssl.root), Outgoing internal, Source all + your group, Destination the office LAN, Service ALL, ACCEPT.', check: (x) => pols(x.c).some((p) => p.action === 'accept' && p.srcintf.includes('ssl.root') && p.dstintf.includes('internal') && p.groups.some((g) => sslRuleGroups(x.c).includes(g))) },
+      { title: 'Remote-Laptop is connected with FortiClient', how: 'Lab > VPN: connect Remote-Laptop to 203.0.113.10 on your SSL-VPN port with the local user.', check: (x) => !!x.rt.lab.sslClients?.laptop },
       { title: 'Remote-Laptop can RDP to PC1 through the tunnel', how: 'Send Remote-Laptop → 192.168.1.110 TCP/3389.', check: (x) => sendOk(x, 'laptop', '192.168.1.110', 'tcp', 3389) },
     ],
   },
@@ -311,8 +334,9 @@ export const LABS: Lab[] = [
     lab: { wan2Cable: true },
     startPage: 'net-sdwan',
     tasks: [
-      { title: 'SD-WAN is enabled with wan1 and wan2 as members', how: 'Network > SD-WAN > SD-WAN Zones: enable, add wan1 (gw 203.0.113.1) and wan2 (gw 198.18.10.1). FortiOS refuses while policies still use wan1 directly: first change policies 1 and 3 (Outgoing) and 2 (Incoming) to virtual-wan-link. Do that right after enabling SD-WAN with wan2 only, then add wan1.', check: (x) => x.net.sdwan.enabled && ['wan1', 'wan2'].every((i) => x.net.sdwan.members.some((m) => m.intf === i)) },
+      { title: 'SD-WAN is enabled with wan1 and wan2 as members', how: '1) Network > SD-WAN: enable SD-WAN and add wan2 (gateway 198.18.10.1). 2) Firewall Policy: change policies 1 and 3 (Outgoing) and policy 2 (Incoming, the website) from wan1 to virtual-wan-link. FortiOS will not add an interface to SD-WAN while policies use it directly. 3) Back in SD-WAN, add wan1 (gateway 203.0.113.1).', check: (x) => x.net.sdwan.enabled && ['wan1', 'wan2'].every((i) => x.net.sdwan.members.some((m) => m.intf === i)) },
       { title: 'Policy 1 goes out the SD-WAN zone and a default route points to it', how: 'Edit policy 1: Outgoing interface virtual-wan-link. Static Routes: 0.0.0.0/0, Interface = SD-WAN zone virtual-wan-link.', check: (x) => policies(x.c).find((p) => p.id === '1')?.dstintf.includes('virtual-wan-link') === true && entries(x.c, 'router static').some((e) => list(def('router static'), e.f, 'sdwan-zone').length > 0) },
+      { title: 'Internet-User can still reach the website', how: 'Quick test "Internet user visits your website" (before switching on the ISP1 outage).', check: (x) => policies(x.c).find((p) => p.id === '2')?.srcintf.includes('virtual-wan-link') === true && (x.rt.lab.ispDown?.wan1 ? x.rt.history.some((h) => h.ok && /Web-Server TCP\/80/.test(h.summary)) : sendOk(x, 'user', '203.0.113.10', 'tcp', 80)) },
       { title: 'A Performance SLA probes an internet server (not the ISP gateway)', how: 'Performance SLAs > Create New: server 8.8.8.8, both members.', check: (x) => x.net.sdwan.health.some((h) => h.members.length >= 2 && !/203\.0\.113\.1|198\.18\.10\.1/.test(h.server)) },
       { title: 'With an ISP1 outage, PC1 still reaches 8.8.8.8', how: 'Lab > WAN: switch on "ISP1 outage", then ping 8.8.8.8 from PC1.', check: (x) => !!x.rt.lab.ispDown?.wan1 && sendOk(x, 'pc1', '8.8.8.8', 'icmp', 0) },
     ],
@@ -430,6 +454,27 @@ export const LABS: Lab[] = [
     tasks: [{ title: 'During the ISP1 outage, PC1 reaches 8.8.8.8', how: 'Keep the outage on (Lab > WAN) while you fix it.', check: (x) => !!x.rt.lab.ispDown?.wan1 && sendOk(x, 'pc1', '8.8.8.8', 'icmp', 0) }],
     hints: ['Network > SD-WAN > Performance SLAs: is wan1 alive or dead?', 'What server is the health check probing? Is it beyond the ISP?', 'Also check which members the health check probes.'],
     solution: ['Performance SLAs: set the server to 8.8.8.8.', 'Make both wan1 and wan2 participants.', 'Apply, then test again.'],
+  },
+  {
+    id: 'c7-return-route',
+    title: 'The branch can reach the tunnel, but not HQ',
+    level: 'Challenge',
+    minutes: 15,
+    topic: 'Troubleshooting: return route, reverse-path check',
+    intro: 'Branch-PC cannot RDP to PC1. The tunnel is up and the Branch-to-HQ policy is correct, yet every packet is dropped. Someone "fixed" the branch route last week.',
+    build: () => {
+      const c = vpnBase(starterConfig(), 'Branch-PSK-2026', false);
+      const R = tableOf(c, 'router static');
+      R.entries.push({ key: String(R.entries.reduce((m, e) => Math.max(m, Number(e.key)), 0) + 1), f: { dst: '10.20.0.0 255.255.255.0', gateway: '203.0.113.1', device: 'wan1' } });
+      return c;
+    },
+    startPage: 'net-static',
+    tasks: [
+      { title: 'Branch-PC can RDP to PC1', how: 'Send Branch-PC → 192.168.1.110 TCP/3389 and read where it is dropped.', check: (x) => sendOk(x, 'branchpc', '192.168.1.110', 'tcp', 3389) },
+      { title: 'PC1 can ping Branch-PC', how: 'Test the reverse direction: PC1 → 10.20.0.10, Ping.', check: (x) => sendOk(x, 'pc1', '10.20.0.10', 'icmp', 0) },
+    ],
+    hints: ['Look at the Packet Walk (or "diagnose debug flow" in the CLI): it says "reverse path check fail, drop".', 'Which route does the FortiGate use to reach 10.20.0.10? Check Dashboard > Network > Routing or "get router info routing-table all".', 'The route back to the branch must point into the tunnel, not out to the internet.'],
+    solution: ['Network > Static Routes > edit the 10.20.0.0/24 route that uses wan1.', 'Interface: to-branch (no gateway).', 'OK, then test both directions.'],
   },
 ];
 

@@ -482,6 +482,18 @@ export class CliSession {
     }
   }
 
+  /** FortiOS refuses a new SD-WAN member that firewall policies or static routes still use directly (same rule as the GUI SD-WAN page). */
+  private sdwanMemberInUse(f: Fields): string[] | null {
+    const intf = str(SCHEMA_MAP['system sdwan'].fields.find((x) => x.name === 'members')!.sub!, f, 'interface');
+    if (!intf) return null;
+    const committed = getState().config['system sdwan'];
+    const before = committed?.kind === 'object' && (committed.f.members as ConfigTable | undefined)?.entries?.some((e) => e.f.interface === intf);
+    if (before) return null;
+    const used = findRefs(this.draft!, 'system interface', intf).filter((r) => r.path === 'firewall policy' || r.path === 'router static');
+    if (!used.length) return null;
+    return FAIL(-23, `Interface ${intf} is used by ${used.map((u) => `${u.path} ${u.key}`).join(', ')}. Remove those references (or change them to the SD-WAN zone) first.`);
+  }
+
   private commitPath(path: string, msg: string) {
     const c = structuredClone(getState().config);
     c[path] = structuredClone(this.draft![path]);
@@ -503,6 +515,9 @@ export class CliSession {
       const miss = this.requiredMissing(t.topPath, t.fields!);
       if (miss) return FAIL(-56, `Attribute '${miss}' MUST be set.`);
       if (t.isNew || JSON.stringify(t.fields) !== t.snapshot) this.commitPath(t.topPath, `${t.isNew ? 'Add' : 'Edit'} ${t.topPath.replace(/ /g, '.')} ${t.key}`);
+    } else if (t.topPath === 'system sdwan' && t.pd.path === 'members') {
+      const used = this.sdwanMemberInUse(t.fields!);
+      if (used) return used;
     }
     this.stack.pop();
     return [];

@@ -23,6 +23,7 @@ const LABS: Shot[] = [
   { id: 'c4-dhcp', pages: ['net-interfaces', 'dash-network'], traffic: { srcHost: 'pc2', dst: '8.8.8.8', proto: 'icmp', dport: 0 } },
   { id: 'c5-branch', pages: ['vpn-ipsec', 'net-static'], traffic: { srcHost: 'pc1', dst: '10.20.0.10', proto: 'icmp', dport: 0 } },
   { id: 'c6-failover', pages: ['net-sdwan'], traffic: { srcHost: 'pc1', dst: '8.8.8.8', proto: 'icmp', dport: 0 } },
+  { id: 'c7-return-route', pages: ['net-static'], traffic: { srcHost: 'branchpc', dst: '192.168.1.110', proto: 'tcp', dport: 3389 } },
 ];
 
 const STORE = '/src/store.ts';

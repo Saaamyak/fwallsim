@@ -56,7 +56,7 @@ export function Welcome() {
         <p className="muted">A practice FortiGate-style firewall that runs in your browser. No device, licence or trial needed.</p>
         <ul className="welcome-list">
           <li>A firewall GUI and CLI that look and behave like FortiOS 7.4</li>
-          <li>19 guided labs and challenges that tick green when your setup really works</li>
+          <li>20 guided labs and challenges that tick green when your setup really works</li>
           <li>The Packet Walk explains every decision the firewall makes, step by step</li>
           <li>Private: your firewall, settings and progress stay in this browser. No account needed.</li>
         </ul>

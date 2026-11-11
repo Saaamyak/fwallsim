@@ -96,10 +96,11 @@ section('SD-WAN');
 store.loadScenario('starter');
 store.updateLab((l) => ({ ...l, wan2Cable: true, ispDown: { wan1: true } }));
 check('outage without SD-WAN blackholes', !send('pc1', '8.8.8.8', 'icmp', 0).ok);
-run('config system sdwan', 'set status enable', 'config zone', 'edit virtual-wan-link', 'next', 'end', 'config members', 'edit 1', 'set interface wan1', 'set gateway 203.0.113.1', 'next', 'edit 2', 'set interface wan2', 'set gateway 198.18.10.1', 'next', 'end',
+run('config system sdwan', 'set status enable', 'config zone', 'edit virtual-wan-link', 'next', 'end', 'end',
+  'config firewall policy', 'edit 1', 'set dstintf virtual-wan-link', 'next', 'edit 2', 'set srcintf virtual-wan-link', 'next', 'edit 3', 'set dstintf virtual-wan-link', 'next', 'end',
+  'config system sdwan', 'config members', 'edit 1', 'set interface wan1', 'set gateway 203.0.113.1', 'next', 'edit 2', 'set interface wan2', 'set gateway 198.18.10.1', 'next', 'end',
   'config health-check', 'edit G', 'set server 203.0.113.1', 'set members 1', 'next', 'end', 'end',
-  'config router static', 'edit 0', 'set sdwan-zone virtual-wan-link', 'next', 'end',
-  'config firewall policy', 'edit 1', 'set dstintf virtual-wan-link', 'next', 'end');
+  'config router static', 'edit 0', 'set sdwan-zone virtual-wan-link', 'next', 'end');
 check('health check to ISP gateway misses the outage', net().sdwan.members.find((m) => m.intf === 'wan1')?.alive === true);
 run('config system sdwan', 'config health-check', 'edit G', 'set server 8.8.8.8', 'set members 1 2', 'next', 'end', 'end');
 check('health check to 8.8.8.8 marks wan1 dead', net().sdwan.members.find((m) => m.intf === 'wan1')?.alive === false);
@@ -193,6 +194,29 @@ section('first login and admin password hashing');
   store.logout();
   for (let i = 0; i < 3; i++) store.login('admin', 'bad' + i, 'pc1');
   check('three failures lock PC1 out', store.lockedUntil('pc1') > Date.now() && store.lockedUntil('pc2') === 0);
+}
+
+section('SD-WAN member still used by policies (CLI matches GUI)');
+{
+  store.loadScenario('starter');
+  const members = () => {
+    const sw = store.getState().config['system sdwan'] as { f: { members?: { entries: { f: Record<string, string> }[] } } } | undefined;
+    return (sw?.f.members?.entries ?? []).map((e) => e.f.interface);
+  };
+  run('config system sdwan', 'set status enable', 'config zone', 'edit virtual-wan-link', 'next', 'end', 'config members', 'edit 1', 'set interface wan2', 'next', 'end', 'end');
+  check('unused wan2 becomes a member', members().includes('wan2'), members().join(','));
+  check('CLI back at the global prompt after wan2', !cli.prompt().includes('('), cli.prompt());
+  run('config system sdwan', 'config members', 'edit 2', 'set interface wan1', 'next');
+  const err = cli.out.slice(-3).join(' ');
+  check('wan1 used by policies is refused', err.includes('Interface wan1 is used by firewall policy 1, firewall policy 2, firewall policy 3') && err.includes('Command fail. Return code -23'), err);
+  run('abort', 'end', 'end');
+  check('wan1 not added', !members().includes('wan1'), members().join(','));
+  check('CLI back at the global prompt after refusal', !cli.prompt().includes('('), cli.prompt());
+  run('config firewall policy', 'edit 1', 'set dstintf virtual-wan-link', 'next', 'edit 2', 'set srcintf virtual-wan-link', 'next', 'edit 3', 'set dstintf virtual-wan-link', 'next', 'end',
+    'config system sdwan', 'config members', 'edit 2', 'set interface wan1', 'next', 'end', 'end');
+  check('wan1 accepted once policies use the SD-WAN zone', members().includes('wan1') && members().includes('wan2'), members().join(','));
+  run('config system sdwan', 'config members', 'edit 2', 'set gateway 203.0.113.1', 'next', 'end', 'end');
+  check('editing an existing member is not refused', !cli.out.slice(-3).join(' ').includes('is used by'));
 }
 
 console.log(`\n${passed} passed, ${failed} failed`);

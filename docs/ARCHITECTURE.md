@@ -60,7 +60,7 @@ FWallSim/
 │  ├─ cli/                   the FortiOS-style CLI
 │  ├─ gui/                   the GUI shell, shared widgets and one file per page
 │  ├─ lab/                   the Lab panel at the bottom (traffic generator, topology, packet walk, …)
-│  └─ labs/labs.ts           the 13 guided labs and 6 challenges, with live checks
+│  └─ labs/labs.ts           the 13 guided labs and 7 challenges, with live checks
 ├─ tests/                    Node test suites (engine, labs) and the lab reference solutions
 ├─ e2e/                      Playwright browser tests
 ├─ course/                   class PDF builder (template, capture scripts, screenshots, PDFs)

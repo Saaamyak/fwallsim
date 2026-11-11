@@ -21,10 +21,10 @@ You don't need to know anything in advance. Lab 1 starts with logging in and ren
 
 | Level | Topics |
 |---|---|
-| Beginner (5 labs) | First login and system basics, your first firewall policy and NAT, reading logs, address and service objects, publishing a web server with a Virtual IP |
+| Beginner (5 labs) | System basics, your first firewall policy and NAT, reading logs, address and service objects, publishing a web server with a Virtual IP |
 | Intermediate (4) | Why rule order matters, changing the LAN subnet, hardening admin access, identity-based access with LDAP |
 | Advanced (4) | Site-to-site IPsec VPN, SSL-VPN for remote workers, SD-WAN with two ISPs, OSPF over VPN and BGP |
-| Challenges (6) | Broken networks to fix, with hints: "Nobody can browse the internet", "Pings work, websites do not", "Our website is down", "PC2 has no network", "The branch office is cut off", "The backup line never takes over" |
+| Challenges (7) | Broken networks to fix, with hints: "Nobody can browse the internet", "Pings work, websites do not", "Our website is down", "PC2 has no network", "The branch office is cut off", "The backup line never takes over", "The branch can reach the tunnel, but not HQ" |
 
 ## How it works
 
@@ -45,7 +45,7 @@ Each lab also has a printable class in [course/pdf/](course/pdf) with click-by-c
 | ![The Packet Walk: every step a ping takes through the firewall, in plain words](docs/img/packet-walk.jpg) | ![The CLI: a policy built with config/edit/set, then a live diagnose debug flow trace](docs/img/cli.jpg) |
 | **Packet Walk:** routing, policy and NAT, step by step | **CLI:** FortiOS-style commands and a live `diagnose debug flow` |
 | ![The lab catalogue: Beginner, Intermediate and Advanced labs plus challenges](docs/img/labs.jpg) | ![The welcome screen on the first visit](docs/img/welcome.jpg) |
-| **19 labs and challenges**, from first login to BGP | **First visit:** create your admin password and start |
+| **20 labs and challenges**, from first login to BGP | **First visit:** create your admin password and start |
 
 ## Run it on your own computer
 
@@ -115,10 +115,10 @@ Works like FortiOS: `?` for help, Tab to complete, ↑/↓ history, Ctrl+C to st
 - **Scenario**: *Factory default* (blocks everything) or *Small office* (working LAN, DMZ and VIP)
 
 ### Training
-Click **Labs** in the header. 13 guided labs (Beginner → Advanced) and 6 troubleshooting challenges. Each loads its own starting configuration and opens a Lab Guide whose tasks tick green as soon as the configuration and real simulated traffic prove they work.
+Click **Labs** in the header. 13 guided labs (Beginner → Advanced) and 7 troubleshooting challenges. Each loads its own starting configuration and opens a Lab Guide whose tasks tick green as soon as the configuration and real simulated traffic prove they work.
 
 ### The course
-`course/pdf/` holds 20 PDFs: **Class 00** (the course plan) and **Classes 01–19**, one per lab, with click-by-click steps and annotated screenshots.
+`course/pdf/` holds 21 PDFs: **Class 00** (the course plan) and **Classes 01–20**, one per lab, with click-by-click steps and annotated screenshots.
 
 ### The launch video
 [`media/fwallsim-tour.mp4`](media/fwallsim-tour.mp4) (23 s, 1080p, original music): a new firewall blocks the internet, and you fix it. The README shows its GIF preview; `video/` holds the plan, a share caption and the scripts that build it.
@@ -152,7 +152,7 @@ Details: [docs/ARCHITECTURE.md → Where data lives](docs/ARCHITECTURE.md#where-
 
 React 18 + TypeScript + Vite 5, with no backend. The simulated firewall (config engine, packet flow, VPN, routing) is plain TypeScript in `src/engine/`, the FortiOS-style CLI is in `src/cli/`, and the labs are in `src/labs/labs.ts`.
 
-**Tests:** run `npx playwright install chromium` once, then `npm test`. That runs the typecheck, the engine checks (57), lab solvability with a backup/restore round trip (19 labs) and the browser tests (41, Chromium, including phone and tablet sizes). See [docs/HOW-TO.md](docs/HOW-TO.md#run-the-tests).
+**Tests:** run `npx playwright install chromium` once, then `npm test`. That runs the typecheck, the engine checks (64), lab solvability with a backup/restore round trip (20 labs) and the browser tests (41, Chromium, including phone and tablet sizes). See [docs/HOW-TO.md](docs/HOW-TO.md#run-the-tests).
 
 | Document | What's in it |
 |---|---|
