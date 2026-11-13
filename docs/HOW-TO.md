@@ -44,7 +44,7 @@ npm run course
 This takes about 2 minutes:
 1. [course/1-capture.course.ts](../course/1-capture.course.ts) captures annotated screenshots for Classes 1–8 into `course/img/c01…c08`.
 2. [course/1b-labs.course.ts](../course/1b-labs.course.ts) starts and solves the other labs and captures them into `course/img/<lab-id>`.
-3. [course/2-build.course.ts](../course/2-build.course.ts) builds one class per lab from [src/labs/labs.ts](../src/labs/labs.ts), plus Class 00 (the course plan), using [course/template.ts](../course/template.ts), and prints them to `course/pdf/`.
+3. [course/2-build.course.ts](../course/2-build.course.ts) builds one class per lab from [src/labs/labs.ts](../src/labs/labs.ts), plus Class 00 (the course plan), using [course/template.ts](../course/template.ts), and prints them to `public/course/` (named `class-00-course-plan.pdf`, `class-NN-<lab-id>.pdf`; the names come from [src/labs/classes.ts](../src/labs/classes.ts)). Vite serves that folder as-is, so the app's PDF links pick up the new files. Commit them so the live site gets them.
 
 To rebuild only the PDFs from existing screenshots: `npx playwright test -c playwright.course.config.ts 2-build`.
 

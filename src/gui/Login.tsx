@@ -58,6 +58,7 @@ export function Welcome() {
         <ul className="welcome-list">
           <li>A firewall GUI and CLI that look and behave like FortiOS 7.4</li>
           <li>20 guided labs and challenges that tick green when your setup really works</li>
+          <li>A course of 20 class handouts (PDF), one per lab, opened from Labs &amp; Challenges</li>
           <li>The Packet Walk explains every decision the firewall makes, step by step</li>
           <li>Private: your firewall, settings and progress stay in this browser. No account needed.</li>
         </ul>

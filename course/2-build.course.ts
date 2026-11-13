@@ -5,11 +5,13 @@ import fs from 'node:fs';
 import path from 'node:path';
 import { pathToFileURL } from 'node:url';
 import { LABS, type Lab } from '../src/labs/labs';
+import { classFileName, COURSE_DIR } from '../src/labs/classes';
 import { h, labDiagram, renderClass, type ClassDoc } from './template';
 
 const ROOT = path.resolve('course');
 const OUT = path.join(ROOT, 'out');
-const PDF = path.join(ROOT, 'pdf');
+// The PDFs go into the folder Vite serves as-is, so the app can link to them.
+const PDF = path.resolve('public', COURSE_DIR);
 
 // Screenshot folders that illustrate each lab.
 const SHOTS: Record<string, string[]> = {
@@ -67,7 +69,7 @@ function toClass(lab: Lab, no: number): ClassDoc {
 // Class 0: the course plan, an ordered list of every class.
 function plan(docs: ClassDoc[]): ClassDoc {
   const part = (name: string, from: number, to: number) =>
-    h.section(name, h.table(['Class', 'Title', 'Topics', 'Time', 'PDF'], docs.filter((d) => d.no >= from && d.no <= to).map((d) => [`<b>${d.no}</b>`, esc(d.title), esc(d.subtitle), `~${d.minutes} min`, `<code>FWallSim-Class-${String(d.no).padStart(2, '0')}-${d.slug}.pdf</code>`])));
+    h.section(name, h.table(['Class', 'Title', 'Topics', 'Time', 'PDF'], docs.filter((d) => d.no >= from && d.no <= to).map((d) => [`<b>${d.no}</b>`, esc(d.title), esc(d.subtitle), `~${d.minutes} min`, `<code>${classFileName(d.no, d.slug)}</code>`])));
   const total = docs.reduce((s, d) => s + d.minutes, 0);
   return {
     no: 0,
@@ -103,7 +105,7 @@ test('build class PDFs', async ({ page }) => {
     await page.goto(pathToFileURL(html).href);
     await page.waitForLoadState('load');
     await page.pdf({
-      path: path.join(PDF, `FWallSim-Class-${nn}-${d.slug}.pdf`),
+      path: path.join(PDF, classFileName(d.no, d.slug)),
       format: 'A4',
       printBackground: true,
       margin: { top: '14mm', bottom: '16mm', left: '12mm', right: '12mm' },

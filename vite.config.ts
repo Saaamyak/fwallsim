@@ -7,6 +7,6 @@ export default defineConfig({
     port: 5173,
     open: !process.env.FWALLSIM_E2E,
     // Test, course and video output change (and get locked on Windows) while tests run; watching them crashes the server.
-    watch: { ignored: ['**/e2e-results/**', '**/playwright-report/**', '**/course/out/**', '**/course/img/**', '**/course/pdf/**', '**/video/**', '**/dist/**'] },
+    watch: { ignored: ['**/e2e-results/**', '**/playwright-report/**', '**/course/out/**', '**/course/img/**', '**/public/course/**', '**/video/**', '**/dist/**'] },
   },
 });

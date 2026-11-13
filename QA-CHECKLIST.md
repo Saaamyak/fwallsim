@@ -58,6 +58,7 @@ Automated: `npm test` runs the typecheck, the engine regression suite (72 checks
 - [ ] Lab "System basics": run `get system status` in the CLI → task ticks → reload the page / open a new tab and log in → still ticked.
 - [ ] A challenge: hints reveal 1 → 2 → 3 → solution.
 - [ ] Exit lab keeps the config. Restart reloads the lab start.
+- [ ] Labs page: "Course plan (PDF)" and a lab card's "Class PDF" open the right PDF in a new tab; the Lab Guide's "Open the class PDF" opens the running lab's class.
 
 ## 9. Phones and tablets
 - [ ] Phone (or a narrow browser window under 760 px): "Best on a computer or tablet" appears once → Continue on this phone → Welcome. Reload: no notice again.

@@ -17,7 +17,7 @@ export function AboutContent() {
       <p>
         Use the <b>Lab</b> panel at the bottom to send traffic from the simulated PCs, servers and internet hosts. Then read the <b>Packet Walk</b> and <b>Debug Flow</b> to see exactly how the firewall decided.
       </p>
-      <p className="muted">Includes interfaces, DHCP, routing (static, policy, BGP, OSPF), SD-WAN, policies, objects, NAT/VIP, users and LDAP, IPsec and SSL-VPN, admin hardening, logs, a full CLI and 20 guided labs. Planned for v1.1: HA, VDOMs, traffic shaping and security-profile inspection.</p>
+      <p className="muted">Includes interfaces, DHCP, routing (static, policy, BGP, OSPF), SD-WAN, policies, objects, NAT/VIP, users and LDAP, IPsec and SSL-VPN, admin hardening, logs, a full CLI and 20 guided labs. The course comes with 20 class handouts (PDF), one per lab, plus a course plan: open them from <b>Labs</b> in the header. Planned for v1.1: HA, VDOMs, traffic shaping and security-profile inspection.</p>
       <h4>Your data</h4>
       <ul>
         <li>Your firewall configuration, passwords, logs and training progress are stored only in this browser (local storage) and never sent anywhere.</li>
