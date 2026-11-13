@@ -111,7 +111,7 @@ test('build class PDFs', async ({ page }) => {
       margin: { top: '14mm', bottom: '16mm', left: '12mm', right: '12mm' },
       displayHeaderFooter: true,
       headerTemplate: '<span></span>',
-      footerTemplate: `<div style="font-size:8px;color:#888;width:100%;text-align:center">FWallSim v1.0.0 · Class ${d.no}: ${esc(d.title)} · page <span class="pageNumber"></span> / <span class="totalPages"></span></div>`,
+      footerTemplate: `<div style="font-size:8px;color:#888;width:100%;text-align:center">FWallSim v1.1.0 · Class ${d.no}: ${esc(d.title)} · page <span class="pageNumber"></span> / <span class="totalPages"></span></div>`,
     });
   }
 });

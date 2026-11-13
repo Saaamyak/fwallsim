@@ -35,7 +35,7 @@ test('header shows the product, hostname and version without duplication', async
   await freshLogin(page);
   await expect(page.locator('.hdr .brand .brand-name')).toHaveText('FWallSim');
   await expect(page.locator('.hdr .brand .hostname')).toHaveText('FWS60F');
-  await expect(page.locator('.side-foot')).toHaveText('FWallSim v1.0.0');
+  await expect(page.locator('.side-foot')).toHaveText('FWallSim v1.1.0');
 });
 
 test('every menu page opens without errors', async ({ page, errors }) => {

@@ -89,7 +89,7 @@ FieldValue   = string | string[] | ConfigTable | ConfigObject              // ne
 - **schema.ts** describes every path and field: type (int, ip, ipmask, option, ref, words, …), default, allowed options, references to other tables, and the help text shown by `?`. The schema drives the CLI (completion, validation, `show` quoting), defaults and serialization. Integer ranges come from the help text ("(1 - 480)") or a small list of known limits in `cli/session.ts`.
 - **config.ts** has the helpers: `def`, `entries`, `find`, `str`, `list`, `gobj`, `sub`, `setv`, `nextKey`, `findRefs` (who uses an object), `renameObject` (rename and update every reference), `newUuid`.
 - **defaults.ts**: `factoryConfig()` (a new unit), `starterConfig()` (the Small office scenario), `SCENARIOS`, and `migrateConfig()` which upgrades configs saved by older versions (adds new paths, fixes the old hostname, fills admin-profile permissions).
-- **serialize.ts**: `serializeConfig()` writes a FortiOS `.conf` (Backup, `show`), `parseConfigText()` reads one (Restore). `APP_VERSION = '1.0.0'`, `FW_VERSION = 'v7.4.4'`. The lab suite checks that every lab config survives this round trip unchanged.
+- **serialize.ts**: `serializeConfig()` writes a FortiOS `.conf` (Backup, `show`), `parseConfigText()` reads one (Restore). `APP_VERSION = '1.1.0'`, `FW_VERSION = 'v7.4.4'`. The lab suite checks that every lab config survives this round trip unchanged.
 
 ## 2. The network and the packet engine (engine/)
 

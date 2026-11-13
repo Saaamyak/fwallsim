@@ -254,7 +254,7 @@ export function nicInfo(c: Config, net: Net, name: string): string {
 }
 
 export const haStatus = (c: Config) =>
-  [`HA Health Status: OK`, `Model: ${MODEL}`, `Mode: standalone`, `Group: 0`, `Debug: 0`, `Cluster Uptime: n/a`, `Hostname: ${gobj(c, 'system global', 'hostname')}`, `(HA is planned for v1.1)`].join('\n');
+  [`HA Health Status: OK`, `Model: ${MODEL}`, `Mode: standalone`, `Group: 0`, `Debug: 0`, `Cluster Uptime: n/a`, `Hostname: ${gobj(c, 'system global', 'hostname')}`, `(HA is planned for v1.2)`].join('\n');
 
 // ---------- packet sniffer ----------
 

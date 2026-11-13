@@ -1,10 +1,10 @@
-# FWallSim v1.0.0 – Manual QA checklist
+# FWallSim v1.1.0 – Manual QA checklist
 
-Automated: `npm test` runs the typecheck, the engine regression suite (72 checks, including CLI robustness and value ranges), lab solvability plus backup/restore round trip (20 labs) and the browser tests (46 Playwright tests in Chromium, including phone and tablet sizes, including a sweep that opens, edits and saves every page on a fresh and on a busy unit). Use this list for a hands-on pass. Start each section from a factory reset (System > Settings > Factory reset) unless noted.
+Automated: `npm test` runs the typecheck, the engine regression suite (72 checks, including CLI robustness and value ranges), lab solvability plus backup/restore round trip (20 labs) and the browser tests (54 Playwright tests in Chromium, including phone and tablet sizes, including a sweep that opens, edits and saves every page on a fresh and on a busy unit). Use this list for a hands-on pass. Start each section from a factory reset (System > Settings > Factory reset) unless noted.
 
 ## 1. Login and shell
 - [ ] First visit (private window): Welcome screen with the "not affiliated with Fortinet" notice → Get started → Create your admin password → empty and mismatch errors shown → Save and log in → Dashboard opens. Reload after logout: no Welcome again.
-- [ ] Header shows `FWallSim | FWS60F`. ☰ collapses and expands the menu. Sidebar footer shows `FWallSim v1.0.0`.
+- [ ] Header shows `FWallSim | FWS60F`. ☰ collapses and expands the menu. Sidebar footer shows `FWallSim v1.1.0`.
 - [ ] Logout, then a wrong password → "Authentication failure". The new password works.
 - [ ] Three wrong passwords → "locked for N more seconds" counts down; switching "Connecting from" to PC2-Sales lets you log in.
 - [ ] Forgot the password: login page → "Forgot password or locked out? Reset to factory defaults" → Create your admin password appears; training progress is kept.
@@ -77,6 +77,6 @@ Automated: `npm test` runs the typecheck, the engine regression suite (72 checks
 - [ ] Backup on the live site → Restore on http://localhost:5173 brings the same configuration.
 
 
-## Known limitations in v1.0 (by design)
+## Known limitations in v1.1 (by design)
 - HA, multi-VDOM, traffic shaping and security-profile *inspection* are not simulated (menu items marked "later").
 - One simulated FortiGate (FWS60F) with a fixed lab network. Everything runs locally in the browser.

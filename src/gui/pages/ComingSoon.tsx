@@ -10,10 +10,10 @@ export function ComingSoon() {
       <div className="page-title">{leaf ? leaf.label : 'Not found'}</div>
       <div className="coming">
         <h2>
-          <Hammer size={20} style={{ verticalAlign: -3 }} /> Planned for a later version (v1.1)
+          <Hammer size={20} style={{ verticalAlign: -3 }} /> Planned for a later version (v1.2)
         </h2>
         <p className="muted">
-          {leaf?.group} › {leaf?.label} is on the FWallSim roadmap and isn't simulated in v1.0.
+          {leaf?.group} › {leaf?.label} is on the FWallSim roadmap and isn't simulated in v1.1.
         </p>
         {leaf?.learn && (
           <>

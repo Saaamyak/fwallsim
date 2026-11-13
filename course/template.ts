@@ -143,7 +143,7 @@ export function renderClass(d: ClassDoc, next?: { no: number; title: string }): 
   return `<!doctype html><html><head><meta charset="utf-8"><title>FWallSim Class ${d.no}: ${esc(d.title)}</title><style>${CSS}</style></head><body>
 <div class="cover"><div class="brand"><div class="logo">F</div>FWallSim · Firewall Course</div>
 <div class="no">Class ${d.no}</div><h1>${esc(d.title)}</h1><div class="sub">${esc(d.subtitle)}</div>
-<div class="meta"><span>${d.level}</span><span>~${d.minutes} minutes</span><span>FWallSim v1.0.0 (FortiOS 7.4 style)</span></div></div>
+<div class="meta"><span>${d.level}</span><span>~${d.minutes} minutes</span><span>FWallSim v1.1.0 (FortiOS 7.4 style)</span></div></div>
 <div class="goals"><div><h3>You will learn</h3><ul>${d.goals.map((g) => `<li>${g}</li>`).join('')}</ul></div><div><h3>Before you start</h3>${d.before}</div></div>
 ${d.body}
 ${d.quiz.length ? `<section><h2>Quiz</h2><div class="quiz">${d.quiz.map((q, i) => `<div class="q"><b>${i + 1}. ${q.q}</b><ol>${q.options.map((o) => `<li>${o}</li>`).join('')}</ol></div>`).join('')}</div>

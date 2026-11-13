@@ -743,7 +743,7 @@ function firewall(ctx: Ctx, src: HostState, pkt: Pkt, ingress: string): Outcome 
     step(ctx, 'snat', 'skip', 'Source NAT: disabled', 'NAT is off on this policy, so the original source IP is kept.');
   }
   if (vip) D(ctx, '__ip_session_run_tuple', 3484, `DNAT ${pkt.dst}:${pkt.dport}->${dst}:${dport}`);
-  step(ctx, 'utm', 'skip', 'Security profiles: none applied', 'Antivirus, web filter, IPS and application control are planned for v1.1.');
+  step(ctx, 'utm', 'skip', 'Security profiles: none applied', 'Antivirus, web filter, IPS and application control are planned for v1.2.');
 
   // Egress + next hop
   const nh = r.gateway ?? dst;

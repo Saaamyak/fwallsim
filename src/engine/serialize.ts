@@ -4,7 +4,7 @@ import { SCHEMA, SCHEMA_MAP, QUOTED, type FieldDef, type PathDef } from './schem
 import { isPwHash } from './admin';
 
 /** Version of the FWallSim application itself. */
-export const APP_VERSION = '1.0.0';
+export const APP_VERSION = '1.1.0';
 /** Firmware version the simulated device reports (like a real FortiOS unit). */
 export const FW_VERSION = 'v7.4.4';
 export const FW_BUILD = '2662';

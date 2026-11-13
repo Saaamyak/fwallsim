@@ -152,7 +152,7 @@ Details: [docs/ARCHITECTURE.md → Where data lives](docs/ARCHITECTURE.md#where-
 
 React 18 + TypeScript + Vite 5, with no backend. The simulated firewall (config engine, packet flow, VPN, routing) is plain TypeScript in `src/engine/`, the FortiOS-style CLI is in `src/cli/`, and the labs are in `src/labs/labs.ts`.
 
-**Tests:** run `npx playwright install chromium` once, then `npm test`. That runs the typecheck, the engine checks (64), lab solvability with a backup/restore round trip (20 labs) and the browser tests (45, Chromium, including phone and tablet sizes). See [docs/HOW-TO.md](docs/HOW-TO.md#run-the-tests).
+**Tests:** run `npx playwright install chromium` once, then `npm test`. That runs the typecheck, the engine checks (72), lab solvability with a backup/restore round trip (20 labs) and the browser tests (54, Chromium, including phone and tablet sizes). See [docs/HOW-TO.md](docs/HOW-TO.md#run-the-tests).
 
 | Document | What's in it |
 |---|---|
@@ -162,9 +162,11 @@ React 18 + TypeScript + Vite 5, with no backend. The simulated firewall (config 
 
 ## Roadmap
 
-Public launch (v1.0.1): the Welcome screen, "Create your admin password", lockout countdown, hashed admin passwords the tablet/phone layout, link preview cards, security headers and an in-app About & privacy panel are done.
+Public launch (v1.0.1): the Welcome screen, "Create your admin password", lockout countdown, hashed admin passwords, the tablet/phone layout, link preview cards, security headers and an in-app About & privacy panel are done.
 
-v1.1: HA (high availability), VDOMs, traffic shaping and security-profile inspection (antivirus, web filter, IPS, application control). These appear in the menu with a "later" badge.
+v1.1.0: lab tasks that test traffic tick only after you send that traffic, the 21 class PDFs open from inside the app, and phone and tablet polish (minimisable Lab Guide, no iOS zoom on inputs, Esc closes dialogs, wide tables scroll on their own).
+
+v1.2: HA (high availability), VDOMs, traffic shaping and security-profile inspection (antivirus, web filter, IPS, application control). These appear in the menu with a "later" badge.
 
 ## Disclaimer
 
