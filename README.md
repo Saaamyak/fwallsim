@@ -34,7 +34,7 @@ You don't need to know anything in advance. Lab 1 starts with logging in and ren
 4. **See why it worked or failed.** The **Packet Walk** explains every step the firewall took (routing, policy, NAT) in plain words, and **Debug Flow** shows the same as `diagnose debug flow`.
 5. **Tasks tick green** only when the configuration and the simulated traffic prove it works.
 
-Each lab also has a printable class in [course/pdf/](course/pdf) with click-by-click steps and screenshots.
+Each lab also has a printable class handout (PDF) with click-by-click steps and screenshots. Open it from the lab's card on the **Labs** page or from the Lab Guide; the files are in [public/course/](public/course).
 
 ## Screenshots
 
@@ -118,7 +118,7 @@ Works like FortiOS: `?` for help, Tab to complete, ↑/↓ history, Ctrl+C to st
 Click **Labs** in the header. 13 guided labs (Beginner → Advanced) and 7 troubleshooting challenges. Each loads its own starting configuration and opens a Lab Guide whose tasks tick green as soon as the configuration and real simulated traffic prove they work.
 
 ### The course
-`course/pdf/` holds 21 PDFs: **Class 00** (the course plan) and **Classes 01–20**, one per lab, with click-by-click steps and annotated screenshots.
+[`public/course/`](public/course) holds 21 PDFs: **Class 00** (the course plan, `class-00-course-plan.pdf`) and **Classes 01–20**, one per lab (`class-01-l1-basics.pdf` …), with click-by-click steps and annotated screenshots. The site serves them at `/course/…`: the **Labs** page links the course plan and each lab's class, and the Lab Guide links the class of the running lab.
 
 ### The launch video
 [`media/fwallsim-tour.mp4`](media/fwallsim-tour.mp4) (23 s, 1080p, original music): a new firewall blocks the internet, and you fix it. The README shows its GIF preview; `video/` holds the plan, a share caption and the scripts that build it.

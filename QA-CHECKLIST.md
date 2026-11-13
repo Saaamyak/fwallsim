@@ -56,6 +56,7 @@ Automated: `npm test` runs the typecheck, the engine regression suite (64 checks
 - [ ] Labs → Start "Your first firewall policy" (admins are kept) → guide shows 0/4 → tasks tick live → "Lab complete!" → progress 1/20.
 - [ ] A challenge: hints reveal 1 → 2 → 3 → solution.
 - [ ] Exit lab keeps the config. Restart reloads the lab start.
+- [ ] Labs page: "Course plan (PDF)" and a lab card's "Class PDF" open the right PDF in a new tab; the Lab Guide's "Open the class PDF" opens the running lab's class.
 
 ## 9. Phones and tablets
 - [ ] Phone (or a narrow browser window under 760 px): "Best on a computer or tablet" appears once → Continue on this phone → Welcome. Reload: no notice again.

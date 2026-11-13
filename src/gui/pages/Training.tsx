@@ -1,7 +1,8 @@
 import { useEffect, useState } from 'react';
-import { CheckCircle, Clock, GraduationCap, Play } from 'lucide-react';
+import { CheckCircle, Clock, FileText, GraduationCap, Play } from 'lucide-react';
 import { getState, navigate, resetTraining, startLab, useStore } from '../../store';
 import { LABS, type Level } from '../../labs/labs';
+import { classNo, classPdf, COURSE_PLAN_PDF } from '../../labs/classes';
 import { serializeConfig } from '../../engine/serialize';
 import { factoryConfig, migrateConfig } from '../../engine/defaults';
 import type { Config } from '../../engine/types';
@@ -103,6 +104,12 @@ export function TrainingPage() {
             <p className="muted" style={{ margin: '8px 0 0' }}>
               Each lab loads its own starting configuration and opens a guide beside the GUI. Tasks tick automatically when the config and real simulated traffic prove they work. Work in the GUI, the CLI or both.
             </p>
+            <p className="muted" style={{ margin: '6px 0 0' }}>
+              Every lab also has a printable class handout with click-by-click steps and screenshots.{' '}
+              <a href={COURSE_PLAN_PDF} target="_blank" rel="noopener">
+                <FileText size={12} style={{ verticalAlign: -2 }} /> Course plan (PDF)
+              </a>
+            </p>
           </div>
           {done > 0 && (
             <button className="btn sm" onClick={resetTraining}>
@@ -145,6 +152,16 @@ export function TrainingPage() {
                       }}>
                       <Play size={12} /> {active ? 'Restart' : completed ? 'Do again' : 'Start'}
                     </button>
+                    <a
+                      className="btn sm"
+                      style={{ marginLeft: 8, color: 'inherit', textDecoration: 'none' }}
+                      href={classPdf(l.id) ?? undefined}
+                      target="_blank"
+                      rel="noopener"
+                      title={`Class ${classNo(l.id)} handout (PDF, opens in a new tab)`}
+                    >
+                      <FileText size={12} /> Class PDF
+                    </a>
                     {active && <span className="badge info" style={{ marginLeft: 8 }}>in progress</span>}
                   </div>
                 </div>

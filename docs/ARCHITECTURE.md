@@ -61,9 +61,11 @@ FWallSim/
 │  ├─ gui/                   the GUI shell, shared widgets and one file per page
 │  ├─ lab/                   the Lab panel at the bottom (traffic generator, topology, packet walk, …)
 │  └─ labs/labs.ts           the 13 guided labs and 7 challenges, with live checks
+│     labs/classes.ts        lab id → class PDF file name and link (shared by the app and the PDF build)
 ├─ tests/                    Node test suites (engine, labs) and the lab reference solutions
 ├─ e2e/                      Playwright browser tests
-├─ course/                   class PDF builder (template, capture scripts, screenshots, PDFs)
+├─ course/                   class PDF builder (template, capture scripts, screenshots)
+├─ public/course/            the 21 class PDFs, served by the site at /course/
 ├─ media/                    the launch video, its poster and the README's GIF preview
 ├─ video/              the video's plan, caption, and the scripts that build it (work/)
 ├─ docs/                     this documentation
@@ -164,7 +166,7 @@ Each lab: `id`, `title`, `level`, `minutes`, `topic`, `intro`, `build()` (start 
 
 ## 8. The course PDFs (course/)
 
-`template.ts` renders a class (cover, goals, lab diagram, steps, screenshots, hints, solution, next class) to HTML with print CSS. The capture scripts drive the real app with Playwright and draw numbered red markers on elements. `2-build.course.ts` builds one class per lab plus Class 00 and prints A4 PDFs with page numbers through Chromium.
+`template.ts` renders a class (cover, goals, lab diagram, steps, screenshots, hints, solution, next class) to HTML with print CSS. The capture scripts drive the real app with Playwright and draw numbered red markers on elements. `2-build.course.ts` builds one class per lab plus Class 00 and prints A4 PDFs with page numbers through Chromium into `public/course/`. File names come from `src/labs/classes.ts` (`class-NN-<lab-id>.pdf`), which the Training page and the Lab Guide also use for their "Class PDF" links, so the links can't drift. The PDFs open in a new tab as plain same-site files.
 
 ## 9. The launch video (video/)
 
@@ -172,7 +174,7 @@ Each lab: `id`, `title`, `level`, `minutes`, `topic`, `intro`, `build()` (start 
 
 ## 10. Hosting
 
-The public GitHub repo is connected to a Vercel project (Vite preset, `npm run build`, output `dist`). Each push to `main` builds and publishes https://fwallsim.vercel.app in about 15 seconds. Vercel's long per-deploy preview links sit behind a Vercel login by default; the main address is public. `vercel.json` adds security headers (a strict Content-Security-Policy: everything from the same site only, no framing) and serves the app for unknown paths. `index.html` carries the description and the link-preview tags (Open Graph, Twitter card) pointing at `public/og.png`; `public/` also holds the icons, `robots.txt` and `sitemap.xml`. The About panel (`src/gui/About.tsx`) explains what is stored where.
+The public GitHub repo is connected to a Vercel project (Vite preset, `npm run build`, output `dist`). Each push to `main` builds and publishes https://fwallsim.vercel.app in about 15 seconds. Vercel's long per-deploy preview links sit behind a Vercel login by default; the main address is public. `vercel.json` adds security headers (a strict Content-Security-Policy: everything from the same site only, no framing) and serves the app for unknown paths (except `/assets/` and `/course/`, so a missing PDF is a real 404). `index.html` carries the description and the link-preview tags (Open Graph, Twitter card) pointing at `public/og.png`; `public/` also holds the icons, `robots.txt` and `sitemap.xml`. The About panel (`src/gui/About.tsx`) explains what is stored where.
 
 ## Ports
 

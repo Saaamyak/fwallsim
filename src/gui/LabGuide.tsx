@@ -1,7 +1,8 @@
 import { useEffect, useMemo, useReducer, useState } from 'react';
-import { CheckCircle, Circle, GraduationCap, Lightbulb, RefreshCw, RotateCcw, X } from 'lucide-react';
+import { CheckCircle, Circle, FileText, GraduationCap, Lightbulb, RefreshCw, RotateCcw, X } from 'lucide-react';
 import { exitLab, markLabComplete, revealHint, startLab, useStore } from '../store';
 import { evaluateLab, LABS } from '../labs/labs';
+import { classPdf } from '../labs/classes';
 import { Confirm } from './ui';
 import { openNextLab } from './pages/Training';
 
@@ -50,6 +51,12 @@ export function LabGuide() {
         <h3 style={{ margin: '0 0 6px' }}>{lab.title}</h3>
         <p className="muted" style={{ marginTop: 0 }}>
           {lab.intro}
+        </p>
+        <p style={{ margin: '0 0 10px', fontSize: 12 }}>
+          <a href={classPdf(lab.id) ?? undefined} target="_blank" rel="noopener">
+            <FileText size={12} style={{ verticalAlign: -2 }} /> Open the class PDF
+          </a>
+          <span className="muted"> (steps and screenshots)</span>
         </p>
         {allDone && (
           <div className="walk-lines" style={{ borderLeftColor: 'var(--ok)', marginBottom: 10 }}>
