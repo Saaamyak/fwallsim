@@ -39,7 +39,7 @@ function AddressList() {
     { title: 'Details', render: (r) => <span className={r.grp ? '' : 'mono'}>{r.detail}</span> },
     { title: 'Interface', render: (r) => r.intf },
     { title: 'Type', render: (r) => r.type },
-    { title: 'Comments', render: (r) => <span className="muted">{r.comment}</span> },
+    { title: 'Comments', render: (r) => <span className="muted" style={{ display: 'inline-block', minWidth: 160 }}>{r.comment}</span> },
   ];
   return (
     <div className="page">

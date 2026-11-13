@@ -92,7 +92,7 @@ test('policy built in the GUI makes traffic pass; disabling it blocks again; Pol
   await page.getByRole('button', { name: 'Policy Lookup' }).click();
   await page.locator('.modal').getByRole('button', { name: 'Search' }).click();
   await expect(page.locator('.modal')).toContainText('matches policy 1');
-  await page.locator('.modal').getByRole('button', { name: 'Close' }).click();
+  await page.locator('.modal-foot').getByRole('button', { name: 'Close' }).click();
 });
 
 test('VIP and inbound policy publish the web server', async ({ page, errors }) => {

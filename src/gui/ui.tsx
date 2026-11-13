@@ -43,7 +43,27 @@ export function Section({ title, children }: { title: ReactNode; children: React
   );
 }
 
+// Open modals, newest last: Esc closes only the top one.
+const modalStack: { close: () => void }[] = [];
+
 export function Modal({ title, children, onClose, footer, wide }: { title: ReactNode; children: ReactNode; onClose: () => void; footer?: ReactNode; wide?: boolean }) {
+  const closeRef = useRef(onClose);
+  closeRef.current = onClose;
+  useEffect(() => {
+    const me = { close: () => closeRef.current() };
+    modalStack.push(me);
+    const onKey = (e: KeyboardEvent) => {
+      if (e.key === 'Escape' && modalStack[modalStack.length - 1] === me) {
+        e.preventDefault();
+        me.close();
+      }
+    };
+    window.addEventListener('keydown', onKey);
+    return () => {
+      window.removeEventListener('keydown', onKey);
+      modalStack.splice(modalStack.indexOf(me), 1);
+    };
+  }, []);
   return (
     <>
       <div className="overlay" onClick={onClose} />
@@ -51,7 +71,7 @@ export function Modal({ title, children, onClose, footer, wide }: { title: React
         <div className="modal-hdr">
           {title}
           <span style={{ flex: 1 }} />
-          <button className="hdr-btn" style={{ color: 'inherit' }} onClick={onClose}>
+          <button className="hdr-btn" style={{ color: 'inherit' }} aria-label="Close" onClick={onClose}>
             <X size={16} />
           </button>
         </div>

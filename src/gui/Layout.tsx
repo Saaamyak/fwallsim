@@ -210,7 +210,7 @@ export function Layout() {
       </div>
       <div className="body">
         <nav className={`side ${collapsed ? 'collapsed' : ''} ${narrow ? 'side-drawer' : ''} ${narrow && navOpen ? 'open' : ''}`} aria-hidden={narrow && !navOpen}>
-          <Sidebar collapsed={collapsed} />
+          <Sidebar collapsed={collapsed} onPick={() => setNavOpen(false)} />
         </nav>
         {narrow && navOpen && <div className="side-backdrop" onClick={() => setNavOpen(false)} />}
         <div className="main">
@@ -262,7 +262,8 @@ export function Layout() {
   );
 }
 
-function Sidebar({ collapsed }: { collapsed: boolean }) {
+/** onPick runs after a menu page is chosen (closes the slide-in menu, even when it is the page already open). */
+function Sidebar({ collapsed, onPick }: { collapsed: boolean; onPick: () => void }) {
   const page = useStore((s) => s.ui.page);
   const config = useStore((s) => s.config);
   const user = useStore((s) => s.auth.user);
@@ -296,7 +297,11 @@ function Sidebar({ collapsed }: { collapsed: boolean }) {
             {isOpen && !collapsed && (
               <div className="nav-sub">
                 {items.map((i) => (
-                  <div key={i.id} className={`nav-item ${page === i.id ? 'active' : ''}`} onClick={() => navigate(i.id)}>
+                  <div key={i.id} className={`nav-item ${page === i.id ? 'active' : ''}`} onClick={() => {
+                      navigate(i.id);
+                      onPick();
+                    }}
+                  >
                     {i.label}
                     {i.phase && <span className="phase" title="Not simulated yet: planned for a later version">later</span>}
                   </div>

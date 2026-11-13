@@ -2,6 +2,7 @@ import { useEffect, useReducer, useRef, useState } from 'react';
 import { Maximize2, Minimize2, Trash2, X } from 'lucide-react';
 import { setUi, useStore } from '../store';
 import { getCli } from '../cli/session';
+import { useGuideOpen } from './LabGuide';
 
 export function Cli() {
   const cli = getCli();
@@ -12,6 +13,7 @@ export function Cli() {
   const ref = useRef<HTMLDivElement>(null);
   const input = useRef<HTMLInputElement>(null);
   useStore((s) => s.config); // re-render prompt when hostname changes
+  const guideOpen = useGuideOpen(); // sit beside the Lab Guide, not over it
 
   useEffect(() => cli.onChange(force), [cli]);
   useEffect(() => {
@@ -75,7 +77,7 @@ export function Cli() {
 
   const style = max ? { top: 52, right: 12, left: 12, bottom: 12, width: 'auto', height: 'auto' } : undefined;
   return (
-    <div className="cli-win" style={style}>
+    <div className={`cli-win ${guideOpen ? 'beside-guide' : ''}`} style={style}>
       <div className="bar">
         CLI Console
         <span className="muted" style={{ fontSize: 11, color: '#9aa' }}>
