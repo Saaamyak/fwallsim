@@ -152,7 +152,7 @@ Details: [docs/ARCHITECTURE.md → Where data lives](docs/ARCHITECTURE.md#where-
 
 React 18 + TypeScript + Vite 5, with no backend. The simulated firewall (config engine, packet flow, VPN, routing) is plain TypeScript in `src/engine/`, the FortiOS-style CLI is in `src/cli/`, and the labs are in `src/labs/labs.ts`.
 
-**Tests:** run `npx playwright install chromium` once, then `npm test`. That runs the typecheck, the engine checks (64), lab solvability with a backup/restore round trip (20 labs) and the browser tests (44, Chromium, including phone and tablet sizes). See [docs/HOW-TO.md](docs/HOW-TO.md#run-the-tests).
+**Tests:** run `npx playwright install chromium` once, then `npm test`. That runs the typecheck, the engine checks (64), lab solvability with a backup/restore round trip (20 labs) and the browser tests (45, Chromium, including phone and tablet sizes). See [docs/HOW-TO.md](docs/HOW-TO.md#run-the-tests).
 
 | Document | What's in it |
 |---|---|

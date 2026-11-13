@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import { navigate, useStore } from '../../store';
 import { def, entries, find, list, newUuid, str } from '../../engine/config';
-import { fmtIpMask, isIp, ipToInt, parseIpMask } from '../../engine/ip';
+import { fmtIpMask, intToIp, isIp, ipToInt, parseIpMask } from '../../engine/ip';
 import { HOSTS } from '../../engine/topology';
 import { ObjectList, type Col } from '../ObjectList';
 import { Chip, EditPage, Field, Seg, Toggle } from '../ui';
@@ -69,11 +69,11 @@ function AddressEdit({ name }: { name: string }) {
   const A = def('firewall address');
   const e = name ? find(config, 'firewall address', name) : undefined;
   const s = (n: string) => (e ? str(A, e.f, n) : '');
-  const sub = parseIpMask(s('subnet') || '0.0.0.0 0.0.0.0');
+  const sub = e ? parseIpMask(s('subnet') || '0.0.0.0 0.0.0.0') : null;
   const [f, setF] = useState({
     name,
     type: e ? s('type') : 'ipmask',
-    subnet: sub ? `${s('subnet').split(' ')[0]}/${s('subnet').split(' ')[1]}` : '',
+    subnet: sub ? `${intToIp(sub.ip)}/${sub.prefix}` : '',
     start: s('start-ip'),
     end: s('end-ip'),
     fqdn: s('fqdn'),

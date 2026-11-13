@@ -1,8 +1,9 @@
 import { useEffect, useMemo, useReducer, useState } from 'react';
 import { CheckCircle, Circle, GraduationCap, Lightbulb, RefreshCw, RotateCcw, X } from 'lucide-react';
-import { exitLab, markLabComplete, navigate, revealHint, startLab, useStore } from '../store';
+import { exitLab, markLabComplete, revealHint, startLab, useStore } from '../store';
 import { evaluateLab, LABS } from '../labs/labs';
 import { Confirm } from './ui';
+import { openNextLab } from './pages/Training';
 
 export function LabGuide() {
   const training = useStore((s) => s.training);
@@ -54,7 +55,7 @@ export function LabGuide() {
           <div className="walk-lines" style={{ borderLeftColor: 'var(--ok)', marginBottom: 10 }}>
             <b className="ok-text">✔ Lab complete!</b>
             <div>
-              All tasks pass. <a onClick={() => navigate('training')}>Choose the next lab</a>
+              All tasks pass. <a onClick={openNextLab}>Choose the next lab</a>
             </div>
           </div>
         )}

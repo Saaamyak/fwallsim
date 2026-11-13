@@ -148,7 +148,7 @@ export const LABS: Lab[] = [
     startPage: 'pol-policy',
     tasks: [
       { title: 'Create an ACCEPT policy from internal to wan1', how: 'Policy & Objects > Firewall Policy > Create New. Incoming internal, Outgoing wan1, Source all, Destination all, Schedule always, Service ALL, Action ACCEPT.', check: (x) => pols(x.c).some((p) => p.action === 'accept' && p.srcintf.includes('internal') && p.dstintf.includes('wan1')) },
-      { title: 'Enable NAT on that policy', how: 'In the same policy, Firewall / Network Options > NAT: on (Use Outgoing Interface Address).', check: (x) => pols(x.c).some((p) => p.action === 'accept' && p.srcintf.includes('internal') && p.dstintf.includes('wan1') && p.nat) },
+      { title: 'NAT is on for that policy', how: 'In the same policy, Firewall / Network Options > NAT is on by default for a new policy: make sure it stays on (Use Outgoing Interface Address).', check: (x) => pols(x.c).some((p) => p.action === 'accept' && p.srcintf.includes('internal') && p.dstintf.includes('wan1') && p.nat) },
       { title: 'PC1 can ping 8.8.8.8', how: 'Lab > Traffic Generator > quick test "PC1 pings 8.8.8.8". Look at the Source NAT step in the Packet Walk.', check: (x) => sendOk(x, 'pc1', '8.8.8.8', 'icmp', 0) },
       { title: 'PC1 can browse www.example.com', how: 'Quick test "PC1 browses www.example.com". This needs DNS first. The Packet Walk shows the DNS query too.', check: (x) => sendOk(x, 'pc1', 'www.example.com') },
     ],

@@ -6,7 +6,7 @@ import { entries, find, gobj, newUuid, nextKey, objectOf, tableOf } from '../../
 import { policies, type PolicyView } from '../../engine/views';
 import { policyLookup } from '../../engine/packet';
 import type { Proto } from '../../engine/objects';
-import { ActionCell, ChipList, Confirm, ContextMenu, Field, Modal, Seg, fmtAgo, fmtBytes, type MenuItem } from '../ui';
+import { ActionCell, ChipList, Confirm, ContextMenu, Field, Modal, Seg, fmtAgo, fmtBytes, type MenuItem, useMedia } from '../ui';
 import { kindOfName, ifaceOptions } from '../picker';
 import { PolicyEdit } from './PolicyEdit';
 
@@ -33,6 +33,7 @@ function PolicyList() {
   const sessions = useStore((s) => s.runtime.sessions);
   const [view, setView] = useState<'pair' | 'seq'>('pair');
   const [sel, setSel] = useState<string | null>(null);
+  const touchOnly = useMedia('(hover: none)'); // phones and tablets: no drag-and-drop or right-click
   const [q, setQ] = useState('');
   const [closed, setClosed] = useState<Record<string, boolean>>({});
   const [menu, setMenu] = useState<{ x: number; y: number; id: string } | null>(null);
@@ -288,7 +289,14 @@ function PolicyList() {
         </table>
       </div>
       <p className="muted" style={{ marginTop: 10 }}>
-        Policies are evaluated from top to bottom and the <b>first match wins</b>. Drag rows to reorder them. Right-click for more actions (insert, clone, enable/disable, logs). Right-click the Implicit Deny row to log violation traffic.
+        Policies are evaluated from top to bottom and the <b>first match wins</b>.{' '}
+        {touchOnly ? (
+          <>
+            To reorder them on a touch screen, use the CLI (&gt;_): <span className="mono">config firewall policy</span>, then <span className="mono">move 3 before 1</span>.
+          </>
+        ) : (
+          'Drag rows to reorder them. Right-click for more actions (insert, clone, enable/disable, logs). Right-click the Implicit Deny row to log violation traffic.'
+        )}
         {selP && !selP.status && ' The selected policy is disabled and is skipped during lookup.'}
       </p>
       {menu &&
