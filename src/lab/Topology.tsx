@@ -68,7 +68,7 @@ export function Topology() {
         <Box x={530} y={265} w={150} h={40} title="Web-Server" sub={`${web.ip} gw ${web.host.gw}`} sel={src === 'web'} onClick={() => pick('web')} />
 
         {/* WAN */}
-        <Link x1={630} y1={130} x2={760} y2={130} up={!!ifs.wan1?.up} label={`wan1 ${ip('wan1')}`} lx={695} ly={120} />
+        <Link x1={630} y1={130} x2={770} y2={130} up={!!ifs.wan1?.up} label={`wan1 ${ip('wan1')}`} lx={692} ly={120} />
         {lab.wan2Cable ? (
           <>
             <Link x1={630} y1={165} x2={745} y2={225} up={!!ifs.wan2?.up} label={`wan2 ${ip('wan2')}`} lx={665} ly={232} />
@@ -78,8 +78,8 @@ export function Topology() {
         ) : (
           <Link x1={630} y1={160} x2={700} y2={200} up={false} label="wan2 (no cable)" lx={690} ly={222} />
         )}
-        <Box x={800} y={130} w={110} h={42} title="ISP-Router" sub={lab.ispDown?.wan1 ? 'OUTAGE' : '203.0.113.1'} />
-        <Link x1={855} y1={130} x2={930} y2={130} up={!lab.ispDown?.wan1} label="" />
+        <Box x={825} y={130} w={110} h={42} title="ISP-Router" sub={lab.ispDown?.wan1 ? 'OUTAGE' : '203.0.113.1'} />
+        <Link x1={880} y1={130} x2={930} y2={130} up={!lab.ispDown?.wan1} label="" />
         <ellipse cx={1000} cy={130} rx={70} ry={42} fill="var(--group)" stroke="var(--border-strong)" />
         <text x={1000} y={126} textAnchor="middle" fontSize={13} fontWeight={600}>
           Internet

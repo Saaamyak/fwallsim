@@ -789,6 +789,13 @@ function firewall(ctx: Ctx, src: HostState, pkt: Pkt, ingress: string): Outcome 
     if (isPrivate(tsrcN)) {
       deadReply = `The packet left with private source ${tsrc}. Internet routers cannot route replies back to a private (RFC 1918) address, so the reply is lost.`;
       deadHint = 'Enable NAT on the policy so the source becomes the wan1 public address.';
+      // point at the cause: the Source NAT step that kept the private address
+      const snat = !pol?.nat ? [...ctx.steps].reverse().find((s) => s.stage === 'snat') : undefined;
+      if (snat) {
+        snat.status = 'fail';
+        snat.detail = `NAT is off on this policy, so the packet keeps its private source ${tsrc}. This is why the internet cannot reply.`;
+        snat.hint = deadHint;
+      }
     } else if (!wanOwner(ctx, tsrcN, egress)) {
       deadReply = `Replies are sent to ${tsrc}, but ${isp.name} only delivers ${isp.net}/${isp.prefix} to your ${egress}, and nothing on that segment answers ARP for ${tsrc}.`;
       deadHint = 'An IP pool must use addresses from the WAN subnet with ARP reply enabled, or be routed to you by the ISP.';

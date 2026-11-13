@@ -1,4 +1,4 @@
-import { useMemo, useState } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 import { CheckCircle, Send, Trash2, XCircle, ListChecks } from 'lucide-react';
 import { clearHistory, sendTraffic, setUi, useStore } from '../store';
 import { buildNet } from '../engine/net';
@@ -45,6 +45,13 @@ export function TrafficGen() {
     sendTraffic({ srcHost: s, dst: d.trim(), proto: p, dport: pt, label: `${HOSTS.find((h) => h.id === s)?.name} → ${d.trim()} ${p === 'icmp' ? 'ping' : `${p.toUpperCase()}/${pt}`}` });
   };
   const srcState = net.hosts.find((h) => h.host.id === src);
+  // After a send, bring the newest result into view (on phones it sits below the quick tests).
+  const newest = useRef<HTMLDivElement>(null);
+  const seen = useRef(history[0]?.id);
+  useEffect(() => {
+    if (history[0] && history[0].id !== seen.current) newest.current?.scrollIntoView({ block: 'nearest' });
+    seen.current = history[0]?.id;
+  }, [history]);
 
   return (
     <div className="lab-grid">
@@ -148,8 +155,8 @@ export function TrafficGen() {
             <Trash2 size={12} /> Clear
           </button>
         </div>
-        {history.map((r) => (
-          <div key={r.id} className={`result ${selected === r.id ? 'selected' : ''}`} onClick={() => setUi({ selectedResult: r.id })} onDoubleClick={() => setUi({ selectedResult: r.id, dockTab: 'walk' })}>
+        {history.map((r, i) => (
+          <div key={r.id} ref={i === 0 ? newest : undefined} className={`result ${selected === r.id ? 'selected' : ''}`} onClick={() => setUi({ selectedResult: r.id })} onDoubleClick={() => setUi({ selectedResult: r.id, dockTab: 'walk' })}>
             {r.ok ? <CheckCircle size={16} color="var(--ok)" style={{ flex: 'none', marginTop: 1 }} /> : <XCircle size={16} color="var(--err)" style={{ flex: 'none', marginTop: 1 }} />}
             <div style={{ flex: 1 }}>
               <div>

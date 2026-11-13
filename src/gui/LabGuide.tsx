@@ -1,9 +1,43 @@
 import { useEffect, useMemo, useReducer, useState } from 'react';
-import { CheckCircle, Circle, GraduationCap, Lightbulb, RefreshCw, RotateCcw, X } from 'lucide-react';
-import { exitLab, markLabComplete, revealHint, startLab, useStore } from '../store';
+import { CheckCircle, Circle, GraduationCap, Lightbulb, Minus, RefreshCw, RotateCcw, X } from 'lucide-react';
+import { exitLab, markLabComplete, revealHint, setUi, startLab, useStore } from '../store';
 import { evaluateLab, LABS } from '../labs/labs';
-import { Confirm } from './ui';
+import { Confirm, PHONE, useMedia } from './ui';
 import { openNextLab } from './pages/Training';
+
+// ---------- minimised guide (remembered for this browser session) ----------
+
+const MIN_KEY = 'fwallsim.guideMin';
+let guideMin = (() => {
+  try {
+    return sessionStorage.getItem(MIN_KEY) === '1';
+  } catch {
+    return false;
+  }
+})();
+const minListeners = new Set<() => void>();
+
+export function setGuideMin(v: boolean) {
+  guideMin = v;
+  try {
+    sessionStorage.setItem(MIN_KEY, v ? '1' : '0');
+  } catch {
+    /* storage blocked: the choice lasts until reload */
+  }
+  minListeners.forEach((l) => l());
+}
+
+/** True while the Lab Guide is open as a full panel (a lab is active and the guide is not minimised). */
+export function useGuideOpen() {
+  const active = useStore((s) => !!s.training.active);
+  const [min, setMin] = useState(guideMin);
+  useEffect(() => {
+    const on = () => setMin(guideMin);
+    minListeners.add(on);
+    return () => void minListeners.delete(on);
+  }, []);
+  return active && !min;
+}
 
 export function LabGuide() {
   const training = useStore((s) => s.training);
@@ -12,6 +46,11 @@ export function LabGuide() {
   const [tick, recheck] = useReducer((x: number) => x + 1, 0);
   const [restart, setRestart] = useState(false);
   const lab = LABS.find((l) => l.id === training.active);
+  const open = useGuideOpen();
+  // on a phone with the Lab panel maximised there is no room for the guide, so it shows as a bar
+  const phone = useMedia(PHONE);
+  const dockMax = useStore((s) => s.ui.dock === 'max');
+  const squeezed = phone && dockMax;
   const results = useMemo(() => (lab ? evaluateLab(lab, config, rt) : []), [lab, config, rt.lab, rt.history, rt.trafficLogs, tick]); // eslint-disable-line
   const allDone = results.length > 0 && results.every(Boolean);
   const completed = lab ? !!training.completed[lab.id] : false;
@@ -29,6 +68,27 @@ export function LabGuide() {
   if (!lab) return null;
   const hints = training.hints[lab.id] ?? 0;
   const firstOpen = results.findIndex((r) => !r);
+  const doneCount = results.filter(Boolean).length;
+
+  if (!open || squeezed)
+    return (
+      <aside className="lab-guide mini">
+        <button
+          className="lab-guide-restore"
+          title="Show the lab guide"
+          onClick={() => {
+            setGuideMin(false);
+            if (squeezed) setUi({ dock: 'normal' });
+          }}
+        >
+          <GraduationCap size={16} style={{ flex: 'none' }} />
+          <span className="lab-guide-mini-title">{lab.title}</span>
+          <span className="badge info" style={{ flex: 'none' }}>
+            {doneCount}/{lab.tasks.length}
+          </span>
+        </button>
+      </aside>
+    );
 
   return (
     <aside className="lab-guide">
@@ -41,6 +101,9 @@ export function LabGuide() {
         </button>
         <button className="hdr-btn" style={{ color: 'inherit' }} title="Restart lab" onClick={() => setRestart(true)}>
           <RotateCcw size={14} />
+        </button>
+        <button className="hdr-btn" style={{ color: 'inherit' }} title="Minimise guide" onClick={() => setGuideMin(true)}>
+          <Minus size={15} />
         </button>
         <button className="hdr-btn" style={{ color: 'inherit' }} title="Exit lab (keeps the config)" onClick={exitLab}>
           <X size={15} />
@@ -60,7 +123,7 @@ export function LabGuide() {
           </div>
         )}
         <div className="muted" style={{ fontSize: 11, textTransform: 'uppercase', fontWeight: 700, margin: '8px 0' }}>
-          Tasks ({results.filter(Boolean).length}/{lab.tasks.length})
+          Tasks ({doneCount}/{lab.tasks.length})
         </div>
         {lab.tasks.map((t, i) => (
           <div key={i} className={`lab-task ${results[i] ? 'done' : ''} ${i === firstOpen ? 'current' : ''}`}>

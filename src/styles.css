@@ -276,6 +276,8 @@ a {
 }
 .nav-sub .nav-item {
   padding: 6px 12px 6px 40px;
+  white-space: normal;
+  line-height: 1.3;
   font-weight: 400;
   border-left: 3px solid transparent;
 }
@@ -288,6 +290,7 @@ a {
   color: var(--text);
 }
 .nav-item .phase {
+  flex: none;
   margin-left: auto;
   font-size: 10px;
   opacity: 0.55;
@@ -311,6 +314,8 @@ a {
   flex: 1;
   overflow: auto;
   padding: 0;
+  /* lets forms and tables size themselves to the page area (narrower while the Lab Guide is open) */
+  container: page / size;
 }
 
 /* ---------- page ---------- */
@@ -398,6 +403,29 @@ a {
   background: var(--panel);
   border: 1px solid var(--border);
   overflow: auto;
+  /* keep the table's own scrollbars on screen, above the Lab panel */
+  max-height: max(240px, calc(100cqh - 140px));
+}
+/* always-visible scrollbars, so a wide table shows that it scrolls sideways */
+.tbl-wrap::-webkit-scrollbar {
+  width: 10px;
+  height: 10px;
+}
+.tbl-wrap::-webkit-scrollbar-track {
+  background: var(--thead);
+}
+.tbl-wrap::-webkit-scrollbar-thumb {
+  background: var(--border-strong);
+  border: 2px solid var(--thead);
+  border-radius: 6px;
+}
+.tbl-wrap::-webkit-scrollbar-corner {
+  background: var(--thead);
+}
+@supports not selector(::-webkit-scrollbar) {
+  .tbl-wrap {
+    scrollbar-color: var(--border-strong) var(--thead);
+  }
 }
 table.tbl {
   width: 100%;
@@ -560,7 +588,7 @@ table.tbl {
 }
 .field {
   display: grid;
-  grid-template-columns: 210px 1fr;
+  grid-template-columns: 210px minmax(0, 1fr);
   align-items: start;
   gap: 10px;
   margin-bottom: 10px;
@@ -625,9 +653,15 @@ textarea.inp:focus {
   padding: 14px 0 14px 220px;
   border-top: 1px solid var(--border);
   margin-top: 14px;
+  /* OK / Apply stay in view at the bottom of long forms */
+  position: sticky;
+  bottom: 0;
+  z-index: 2;
+  background: var(--panel);
 }
 .seg {
   display: inline-flex;
+  max-width: 100%;
   border: 1px solid var(--border-strong);
   border-radius: 3px;
   overflow: hidden;
@@ -635,8 +669,9 @@ textarea.inp:focus {
 .seg button {
   border: 0;
   background: var(--panel);
-  padding: 0 12px;
-  height: 26px;
+  padding: 3px 12px;
+  min-height: 26px;
+  line-height: 1.25;
   cursor: pointer;
   border-right: 1px solid var(--border-strong);
 }
@@ -1048,7 +1083,7 @@ textarea.inp:focus {
   flex-direction: column;
 }
 .dock.min {
-  height: 34px;
+  height: auto;
 }
 .dock.normal {
   height: min(330px, 38vh);
@@ -1057,12 +1092,13 @@ textarea.inp:focus {
   height: 72vh;
 }
 .dock-bar {
-  height: 32px;
+  min-height: 32px;
   flex: none;
   display: flex;
+  flex-wrap: wrap;
   align-items: center;
   gap: 2px;
-  padding: 0 8px;
+  padding: 2px 8px;
   background: var(--thead);
   border-bottom: 1px solid var(--border);
 }
@@ -1075,6 +1111,8 @@ textarea.inp:focus {
 }
 .dock-tab {
   height: 26px;
+  flex: none;
+  white-space: nowrap;
   padding: 0 12px;
   border: 0;
   background: transparent;
@@ -1422,6 +1460,37 @@ textarea.inp:focus {
   overflow: auto;
   flex: 1;
 }
+.lab-guide.mini {
+  width: 40px;
+}
+.lab-guide-restore {
+  flex: 1;
+  min-height: 0;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 10px 0;
+  border: 0;
+  background: var(--thead);
+  color: inherit;
+  cursor: pointer;
+  writing-mode: vertical-rl;
+  overflow: hidden;
+  white-space: nowrap;
+  font-weight: 600;
+}
+.lab-guide-restore:hover {
+  background: var(--row-hover);
+}
+.lab-guide-restore .lab-guide-mini-title {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  min-height: 0;
+}
+.cli-win.beside-guide {
+  right: 372px;
+  max-width: calc(100vw - 384px);
+}
 .lab-task {
   padding: 8px 10px;
   border: 1px solid var(--border);
@@ -1436,7 +1505,34 @@ textarea.inp:focus {
   border-color: var(--accent);
 }
 
+/* Narrow page area (tablets, or the Lab Guide open beside the page): a shorter label column so forms fit. */
+@container page (max-width: 620px) {
+  .field {
+    grid-template-columns: 140px minmax(0, 1fr);
+  }
+  .form-footer {
+    padding-left: 150px;
+  }
+  .edit-page {
+    flex-direction: column;
+    align-items: stretch;
+  }
+  .side-card {
+    width: auto;
+  }
+}
+
 /* ---------- smaller screens (keep the widths in step with TABLET / PHONE in gui/ui.tsx) ---------- */
+
+/* Small laptops and landscape tablets: tighter Lab tabs so they fit on one row more often. */
+@media (max-width: 1280px) {
+  .dock-tab {
+    padding: 0 8px;
+  }
+  .dock-title {
+    margin-right: 4px;
+  }
+}
 
 /* Tablets: the menu slides in over the page instead of taking its width. */
 @media (max-width: 1024px) {
@@ -1469,13 +1565,11 @@ textarea.inp:focus {
     width: 300px;
   }
   .dock-bar {
-    height: auto;
-    min-height: 32px;
-    flex-wrap: wrap;
     padding: 2px 4px;
   }
-  .dock.min {
-    height: auto;
+  .cli-win.beside-guide {
+    right: 312px;
+    max-width: calc(100vw - 324px);
   }
 }
 
@@ -1493,8 +1587,28 @@ textarea.inp:focus {
     padding: 10px 10px 20px;
   }
   .field {
-    grid-template-columns: 1fr;
+    grid-template-columns: minmax(0, 1fr);
     gap: 4px;
+  }
+  .form-footer {
+    padding-left: 0;
+  }
+  /* 16 px text in fields stops iOS Safari from zooming in when one is tapped */
+  input,
+  select,
+  textarea {
+    font-size: 16px;
+  }
+  .lab-guide.mini {
+    width: auto;
+  }
+  .lab-guide-restore {
+    writing-mode: horizontal-tb;
+    padding: 8px 12px;
+  }
+  .cli-win.beside-guide {
+    right: 6px;
+    max-width: none;
   }
   .widgets {
     grid-template-columns: minmax(0, 1fr);
@@ -1523,7 +1637,7 @@ textarea.inp:focus {
     border-top: 2px solid var(--accent);
   }
   .dock-tab {
-    padding: 0 8px;
+    padding: 0 6px;
   }
   .dock-tab .tab-label,
   .dock-title {
@@ -1560,13 +1674,15 @@ textarea.inp:focus {
   }
 }
 .about-link {
-  margin-top: 10px;
-  font-size: 11px;
+  margin-top: 4px;
+  font-size: 12px;
   background: none;
   border: 0;
   color: var(--accent, #2f8f5b);
   cursor: pointer;
-  padding: 0;
+  /* a comfortable tap target on touch screens */
+  padding: 8px 4px;
+  min-height: 32px;
   text-align: left;
   align-self: flex-start;
 }
