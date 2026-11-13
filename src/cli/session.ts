@@ -9,10 +9,9 @@ import { fmtIpMask, inNet, ipToInt, isIp, netAddr, parseIpMask, parsePortRange }
 import { policyLookup } from '../engine/packet';
 import type { Proto } from '../engine/objects';
 import type { PacketEvent, Session } from '../engine/runtime';
-import { commitConfig, endSessions, factoryReset, firewallLogout, getState, reboot, sendLocalOut, setUi, subscribe, vpnSetDown } from '../store';
+import { commitConfig, endSessions, factoryReset, firewallLogout, getState, noteCliCommand, reboot, sendLocalOut, setUi, subscribe, vpnSetDown } from '../store';
 import type { TunnelState } from '../engine/vpn';
 import { sdwanConfig } from '../engine/sdwan';
-import { setCliHistorySource } from '../labs/labs';
 import { adminProfile, pathGroup, profilePerms, type Perm } from '../engine/admin';
 import { ldapCheck, radiusCheck } from '../engine/auth';
 import { DIAG_TREE, EXEC_TREE, GET_TREE, isWord, nextPathWords, resolvePath, resolveWord, walkTree, type CmdNode } from './words';
@@ -160,7 +159,6 @@ export class CliSession {
   version = 0;
 
   constructor() {
-    setCliHistorySource(() => this.history);
     this.lastSeen = getState().runtime.seq.result;
     this.tunnelSnap = this.snapTunnels(buildNet(getState().config).tunnels);
     subscribe(() => this.onStore());
@@ -224,6 +222,7 @@ export class CliSession {
     }
     this.emit([this.prompt() + line]);
     if (line.trim()) this.history.unshift(line);
+    if (line.trim() && !this.stack.length) noteCliCommand(line);
     if (line.trim().endsWith('?')) {
       this.emit(this.help(line.trim().slice(0, -1)));
       return;

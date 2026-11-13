@@ -2,7 +2,7 @@ import { useSyncExternalStore } from 'react';
 import type { Config } from './engine/types';
 import { factoryConfig, migrateConfig, SCENARIOS } from './engine/defaults';
 import { sslConnect, syncTunnelInterfaces, type SslResult } from './engine/vpn';
-import { emptyRuntime, type EventLog, type Runtime } from './engine/runtime';
+import { emptyRuntime, type EventLog, type Runtime, type SentTest } from './engine/runtime';
 import { runLocalOut, runTraffic, type TrafficRequest } from './engine/packet';
 import { find, def, str, gobj } from './engine/config';
 import { defaultLab, setLab, type LabState } from './engine/lab';
@@ -283,10 +283,23 @@ export function navigate(page: string, editKey: string | null = null) {
 
 // ---------- traffic ----------
 
+/** The learner sends traffic from the Lab panel. The result is kept in runtime.sent so lab tasks can see it. */
 export function sendTraffic(req: TrafficRequest) {
   const rt = runTraffic(state.config, state.runtime, req);
-  set({ runtime: rt, ui: { ...state.ui, selectedResult: rt.history[0].id } });
-  return rt.history[0];
+  const r = rt.history[0];
+  const outage = Object.keys(state.runtime.lab.ispDown ?? {}).filter((k) => state.runtime.lab.ispDown[k]);
+  const srcIp = buildNet(state.config).hosts.find((h) => h.host.id === req.srcHost)?.ip ?? '';
+  const route = [...r.steps].reverse().find((s) => s.stage === 'route' && s.status === 'ok')?.detail ?? '';
+  const sent: SentTest = { id: r.id, time: r.time, src: req.srcHost, dst: req.dst.trim().toLowerCase(), proto: req.proto, dport: req.proto === 'icmp' ? 0 : req.dport, ok: r.ok, srcIp, route, outage };
+  set({ runtime: { ...rt, sent: [sent, ...(state.runtime.sent ?? [])].slice(0, 30) }, ui: { ...state.ui, selectedResult: r.id } });
+  return r;
+}
+
+/** The CLI reports each command; read-only ones (get/show/diagnose) are kept as lab evidence. No secrets: set commands are never stored. */
+export function noteCliCommand(line: string) {
+  const l = line.trim();
+  if (!/^(get|show|dia\w*)\s/i.test(l)) return;
+  set({ runtime: { ...state.runtime, cli: [l, ...(state.runtime.cli ?? [])].slice(0, 20) } });
 }
 
 export function sendLocalOut(target: string, kind: 'ping' | 'traceroute') {

@@ -1,4 +1,4 @@
-import { test, expect, freshLogin, labTab, cli } from './helpers';
+import { test, expect, freshLogin, labTab, cli, login } from './helpers';
 
 test('start a lab from the catalog, guide ticks live, completion is recorded', async ({ page, errors }) => {
   await freshLogin(page);
@@ -16,6 +16,12 @@ test('start a lab from the catalog, guide ticks live, completion is recorded', a
   await expect(guide).toContainText('Tasks (1/4)'); // NAT is off by default
   await cli(page, 'config firewall policy', 'edit 1', 'set nat enable', 'next', 'end');
   await page.getByTitle('Close').click();
+  // The config is right, but the two traffic tasks wait for a real test from the Traffic Generator.
+  await expect(guide).toContainText('Tasks (2/4)');
+  await labTab(page, 'Traffic Generator');
+  await page.getByText('▸ PC1 pings 8.8.8.8').click();
+  await expect(guide).toContainText('Tasks (3/4)');
+  await page.getByText('▸ PC1 browses www.example.com').click();
   await expect(guide).toContainText('Tasks (4/4)');
   await expect(guide).toContainText('Lab complete!');
 
@@ -38,4 +44,21 @@ test('a challenge reveals hints one by one and then the solution', async ({ page
   await guide.getByRole('button', { name: 'Show solution' }).click();
   await expect(guide).toContainText('Add the service DNS');
   await labTab(page, 'Traffic Generator');
+});
+
+test('lab 1: the CLI task stays ticked after a reload (new browser session)', async ({ page, errors }) => {
+  await freshLogin(page);
+  await page.getByTitle('Labs & Challenges').click();
+  await page.locator('.widget', { hasText: 'System basics' }).getByRole('button', { name: /Start/ }).click();
+  await page.locator('.modal .toggle').click();
+  await page.getByRole('button', { name: 'Start lab' }).click();
+  const guide = page.locator('.lab-guide');
+  await expect(guide).toContainText('Tasks (0/4)');
+  await cli(page, 'get system status');
+  await page.getByTitle('Close').click();
+  await expect(guide).toContainText('Tasks (1/4)');
+  await page.evaluate(() => sessionStorage.clear());
+  await page.reload();
+  await login(page, 'admin', 'Admin123!');
+  await expect(page.locator('.lab-guide')).toContainText('Tasks (1/4)');
 });

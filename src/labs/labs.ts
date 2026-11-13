@@ -1,12 +1,13 @@
 // Guided labs and troubleshooting challenges. Each task is checked live against the config and
-// by running real simulated traffic, so the learner gets a tick the moment it works.
+// by running real simulated traffic. Tasks that ask the learner to test also need that test to
+// have been sent from the Lab panel (runtime.sent) with the expected result.
 import type { Config, Fields } from '../engine/types';
 import { def, entries, find, gobj, list, newUuid, objectOf, str, sub, tableOf } from '../engine/config';
 import { factoryConfig, starterConfig } from '../engine/defaults';
 import { policies } from '../engine/views';
 import { buildNet, type Net } from '../engine/net';
 import { runTraffic, type TrafficRequest } from '../engine/packet';
-import type { Runtime, SimResult } from '../engine/runtime';
+import type { Runtime, SentTest, SimResult } from '../engine/runtime';
 import type { LabState } from '../engine/lab';
 import { ldapCheck } from '../engine/auth';
 import { syncTunnelInterfaces } from '../engine/vpn';
@@ -48,6 +49,24 @@ export interface Lab {
 const pols = (c: Config) => policies(c).filter((p) => p.status);
 const sendOk = (x: CheckCtx, srcHost: string, dst: string, proto: TrafficRequest['proto'] = 'tcp', dport = 443) => x.send({ srcHost, dst, proto, dport }).ok;
 const hostIp = (x: CheckCtx, id: string) => x.net.hosts.find((h) => h.host.id === id)?.ip ?? '';
+
+type Proto = TrafficRequest['proto'];
+const WEB = [443, 80]; // "browse" accepts HTTPS or HTTP
+/** The learner's latest test of this traffic from the Lab panel (Traffic Generator, quick tests, WAN/VPN tools). */
+const lastSent = (x: CheckCtx, src: string, dst: string, proto: Proto, ports: number | number[]) =>
+  (x.rt.sent ?? []).find((s) => s.src === src && s.dst === dst.toLowerCase() && s.proto === proto && (proto === 'icmp' || [ports].flat().includes(s.dport)));
+/** The learner sent this traffic and it worked, and it still works with the current config. */
+const tested = (x: CheckCtx, src: string, dst: string, proto: Proto = 'tcp', ports: number | number[] = WEB, need: (s: SentTest) => boolean = () => true) => {
+  const s = lastSent(x, src, dst, proto, ports);
+  return !!s && s.ok && need(s) && sendOk(x, src, dst, proto, s.dport);
+};
+/** The learner sent this traffic and it was blocked, and it is still blocked with the current config. */
+const testedBlocked = (x: CheckCtx, src: string, dst: string, proto: Proto, port: number, need: (s: SentTest) => boolean = () => true) => {
+  const s = lastSent(x, src, dst, proto, port);
+  return !!s && !s.ok && need(s) && !sendOk(x, src, dst, proto, port);
+};
+const duringOutage = (s: SentTest) => s.outage.includes('wan1');
+const authTime = (x: CheckCtx, user: string) => Object.values(x.rt.lab.auth).find((a) => a.user === user)?.time ?? Infinity;
 
 function addPolicy(c: Config, f: Fields): string {
   const t = tableOf(c, 'firewall policy');
@@ -133,8 +152,8 @@ export const LABS: Lab[] = [
     tasks: [
       { title: 'Change the hostname to HQ-FGT', how: 'System > Settings > Host name, then Apply. Watch the header and the CLI prompt change.', check: (x) => gobj(x.c, 'system global', 'hostname') === 'HQ-FGT' },
       { title: 'Set the admin idle timeout to 15 minutes', how: 'System > Settings > Idle timeout.', check: (x) => gobj(x.c, 'system global', 'admintimeout') === '15' },
-      { title: 'From PC1, ping the FortiGate (192.168.1.99)', how: 'Lab > Traffic Generator: Source PC1-Admin, Destination 192.168.1.99, application Ping, Send traffic. The Packet Walk shows it is local-in traffic.', check: (x) => x.rt.history.some((h) => h.ok && h.summary.includes('192.168.1.99') && h.summary.includes('PING')) },
-      { title: 'Open the CLI and run "get system status"', how: 'Click the >_ button in the header, type get system status and press Enter.', check: () => cliRan(/^get\s+sys\S*\s+stat/) },
+      { title: 'From PC1, ping the FortiGate (192.168.1.99)', how: 'Lab > Traffic Generator: Source PC1-Admin, Destination 192.168.1.99, application Ping, Send traffic. The tick appears once the ping succeeds. The Packet Walk shows it is local-in traffic.', check: (x) => tested(x, 'pc1', '192.168.1.99', 'icmp', 0) },
+      { title: 'Open the CLI and run "get system status"', how: 'Click the >_ button in the header, type get system status and press Enter.', check: (x) => cliRan(x, /^get\s+sys\S*\s+stat/) },
     ],
   },
   {
@@ -149,8 +168,8 @@ export const LABS: Lab[] = [
     tasks: [
       { title: 'Create an ACCEPT policy from internal to wan1', how: 'Policy & Objects > Firewall Policy > Create New. Incoming internal, Outgoing wan1, Source all, Destination all, Schedule always, Service ALL, Action ACCEPT.', check: (x) => pols(x.c).some((p) => p.action === 'accept' && p.srcintf.includes('internal') && p.dstintf.includes('wan1')) },
       { title: 'NAT is on for that policy', how: 'In the same policy, Firewall / Network Options > NAT is on by default for a new policy: make sure it stays on (Use Outgoing Interface Address).', check: (x) => pols(x.c).some((p) => p.action === 'accept' && p.srcintf.includes('internal') && p.dstintf.includes('wan1') && p.nat) },
-      { title: 'PC1 can ping 8.8.8.8', how: 'Lab > Traffic Generator > quick test "PC1 pings 8.8.8.8". Look at the Source NAT step in the Packet Walk.', check: (x) => sendOk(x, 'pc1', '8.8.8.8', 'icmp', 0) },
-      { title: 'PC1 can browse www.example.com', how: 'Quick test "PC1 browses www.example.com". This needs DNS first. The Packet Walk shows the DNS query too.', check: (x) => sendOk(x, 'pc1', 'www.example.com') },
+      { title: 'PC1 can ping 8.8.8.8', how: 'In the Lab panel, open Traffic Generator and click the quick test "PC1 pings 8.8.8.8" (or send PC1-Admin → 8.8.8.8, Ping). The tick appears once the test succeeds. Look at the Source NAT step in the Packet Walk.', check: (x) => tested(x, 'pc1', '8.8.8.8', 'icmp', 0) },
+      { title: 'PC1 can browse www.example.com', how: 'Traffic Generator: click the quick test "PC1 browses www.example.com" (PC1-Admin → www.example.com, HTTPS). This needs DNS first. The Packet Walk shows the DNS query too.', check: (x) => tested(x, 'pc1', 'www.example.com') },
     ],
   },
   {
@@ -191,7 +210,7 @@ export const LABS: Lab[] = [
       { title: 'Create address LAN-Net = 192.168.1.0/24', how: 'Policy & Objects > Addresses > Create New > Address. Type Subnet.', check: (x) => (find(x.c, 'firewall address', 'LAN-Net')?.f.subnet as string | undefined)?.startsWith('192.168.1.0 255.255.255.0') ?? false },
       { title: 'Create service group Web-Basic with DNS, HTTP, HTTPS', how: 'Policy & Objects > Services > Create New > Service Group.', check: (x) => ['DNS', 'HTTP', 'HTTPS'].every((s) => list(def('firewall service group'), find(x.c, 'firewall service group', 'Web-Basic')?.f ?? {}, 'member').includes(s)) },
       { title: 'Policy 1 uses LAN-Net as source and Web-Basic as service', how: 'Edit policy 1: replace Source all with LAN-Net and Service ALL with Web-Basic.', check: (x) => { const p = policies(x.c).find((q) => q.id === '1'); return !!p && p.srcaddr.includes('LAN-Net') && p.service.includes('Web-Basic') && !p.service.includes('ALL'); } },
-      { title: 'PC1 can still browse, but ping to 8.8.8.8 is now blocked', how: 'Test both from the Traffic Generator. Ping is not in Web-Basic, so it falls to the Implicit Deny.', check: (x) => sendOk(x, 'pc1', 'www.example.com') && !sendOk(x, 'pc1', '8.8.8.8', 'icmp', 0) },
+      { title: 'PC1 can still browse, but ping to 8.8.8.8 is now blocked', how: 'Send two tests from the Traffic Generator: PC1-Admin → www.example.com (HTTPS) must work, and PC1-Admin → 8.8.8.8 (Ping) must be blocked. Ping is not in Web-Basic, so it falls to the Implicit Deny.', check: (x) => tested(x, 'pc1', 'www.example.com') && testedBlocked(x, 'pc1', '8.8.8.8', 'icmp', 0) },
     ],
   },
   {
@@ -210,8 +229,8 @@ export const LABS: Lab[] = [
     tasks: [
       { title: 'Create a VIP: wan1 203.0.113.10 TCP/80 → 10.10.10.10:80', how: 'Policy & Objects > Virtual IPs > Create New. Interface wan1, External IP 203.0.113.10, Map to 10.10.10.10, Port Forwarding TCP 80 → 80.', check: (x) => entries(x.c, 'firewall vip').some((v) => webVip(v.f)) },
       { title: 'Create the inbound policy wan1 → dmz with the VIP as destination', how: 'Firewall Policy > Create New: Incoming wan1, Outgoing dmz, Source all, Destination = your VIP, Service HTTP, ACCEPT, NAT off.', check: (x) => pols(x.c).some((p) => p.action === 'accept' && p.srcintf.includes('wan1') && p.dstintf.includes('dmz') && p.dstaddr.some((d) => !!find(x.c, 'firewall vip', d))) },
-      { title: 'Internet-User reaches http://203.0.113.10', how: 'Quick test "Internet user visits your website". The Packet Walk shows the DNAT step.', check: (x) => sendOk(x, 'user', '203.0.113.10', 'tcp', 80) },
-      { title: 'SSH to 203.0.113.10 from the internet is still blocked', how: 'Send Attacker → 203.0.113.10 TCP/22. Only port 80 is forwarded to the web server, and SSH is not allowed on wan1.', check: (x) => !sendOk(x, 'attacker', '203.0.113.10', 'tcp', 22) },
+      { title: 'Internet-User reaches http://203.0.113.10', how: 'Traffic Generator: click the quick test "Internet user visits your website" (Internet-User → 203.0.113.10, HTTP). The Packet Walk shows the DNAT step.', check: (x) => tested(x, 'user', '203.0.113.10', 'tcp', 80) },
+      { title: 'SSH to 203.0.113.10 from the internet is still blocked', how: 'Traffic Generator: click the quick test "Attacker tries SSH to your WAN" (Attacker → 203.0.113.10, SSH TCP/22). It must be blocked: only port 80 is forwarded to the web server, and SSH is not allowed on wan1.', check: (x) => testedBlocked(x, 'attacker', '203.0.113.10', 'tcp', 22) },
     ],
   },
   {
@@ -231,9 +250,9 @@ export const LABS: Lab[] = [
     },
     startPage: 'pol-policy',
     tasks: [
-      { title: 'PC2 can no longer reach YouTube (HTTP or HTTPS)', how: 'Policies are checked top to bottom and the first match wins. Use By Sequence view and drag the block policy above LAN-to-Internet (or right-click > Move up). Then test PC2 → www.youtube.com on TCP/443 and TCP/80.', check: (x) => !sendOk(x, 'pc2', 'www.youtube.com') && !sendOk(x, 'pc2', 'www.youtube.com', 'tcp', 80) },
-      { title: 'PC1 can still reach YouTube', how: 'Send PC1 → www.youtube.com.', check: (x) => sendOk(x, 'pc1', 'www.youtube.com') },
-      { title: 'PC2 can still browse other sites', how: 'Send PC2 → www.example.com.', check: (x) => sendOk(x, 'pc2', 'www.example.com') },
+      { title: 'PC2 can no longer reach YouTube (HTTP or HTTPS)', how: 'Policies are checked top to bottom and the first match wins. Use By Sequence view and drag the block policy above LAN-to-Internet (or right-click > Move up). Then test it in the Traffic Generator: send PC2-Sales → www.youtube.com twice, once HTTPS and once HTTP. Both must be blocked.', check: (x) => testedBlocked(x, 'pc2', 'www.youtube.com', 'tcp', 443) && testedBlocked(x, 'pc2', 'www.youtube.com', 'tcp', 80) },
+      { title: 'PC1 can still reach YouTube', how: 'Traffic Generator: send PC1-Admin → www.youtube.com (HTTPS). It must still work.', check: (x) => tested(x, 'pc1', 'www.youtube.com') },
+      { title: 'PC2 can still browse other sites', how: 'Traffic Generator: send PC2-Sales → www.example.com (HTTPS). It must still work.', check: (x) => tested(x, 'pc2', 'www.example.com') },
     ],
   },
   {
@@ -248,7 +267,7 @@ export const LABS: Lab[] = [
     tasks: [
       { title: 'internal is 192.168.10.1/24', how: 'Network > Interfaces > edit internal > IP/Netmask.', check: (x) => (find(x.c, 'system interface', 'internal')?.f.ip as string | undefined) === '192.168.10.1 255.255.255.0' },
       { title: 'The DHCP server hands out 192.168.10.x addresses', how: 'Same page: DHCP Server address range, e.g. 192.168.10.100 - 192.168.10.200.', check: (x) => hostIp(x, 'pc1').startsWith('192.168.10.') && hostIp(x, 'pc2').startsWith('192.168.10.') },
-      { title: 'PC1 can browse www.example.com again', how: 'Hint: the policy source is the address object LAN-Subnet, which still says 192.168.1.0/24. Objects must follow the renumbering.', check: (x) => hostIp(x, 'pc1').startsWith('192.168.10.') && sendOk(x, 'pc1', 'www.example.com') },
+      { title: 'PC1 can browse www.example.com again', how: 'Hint: the policy source is the address object LAN-Subnet, which still says 192.168.1.0/24. Objects must follow the renumbering. Then test it: Traffic Generator quick test "PC1 browses www.example.com" (PC1-Admin → www.example.com, HTTPS).', check: (x) => hostIp(x, 'pc1').startsWith('192.168.10.') && tested(x, 'pc1', 'www.example.com', 'tcp', WEB, (s) => s.srcIp.startsWith('192.168.10.')) },
     ],
   },
   {
@@ -285,8 +304,8 @@ export const LABS: Lab[] = [
       { title: 'An LDAP server object connects to AD successfully', how: 'User & Authentication > LDAP Servers > Create New, then Test Connectivity until it says Successful.', check: (x) => entries(x.c, 'user ldap').some((e) => ldapCheck(x.c, e.key).ok) },
       { title: 'A user group contains the LDAP server, limited to CN=Sales', how: 'User Groups > Create New: Members = your LDAP server, Remote Groups: CN=Sales,OU=Groups,DC=lab,DC=local.', check: (x) => entries(x.c, 'user group').some((g) => list(def('user group'), g.f, 'member').some((m) => !!find(x.c, 'user ldap', m)) && (sub(g.f, 'match')?.entries ?? []).some((m) => str(def('user group').fields.find((f) => f.name === 'match')!.sub!, m.f, 'group-name').toLowerCase().startsWith('cn=sales'))) },
       { title: 'Policy 1 requires that group', how: 'Edit policy 1 > Source: add the user group next to LAN-Subnet.', check: (x) => (policies(x.c).find((p) => p.id === '1')?.groups.length ?? 0) > 0 },
-      { title: 'jsmith logs in on PC1 and can browse', how: 'Lab > Users: PC1, jsmith / Sales123!, Log in. Then send PC1 → www.example.com. Note: before login even DNS is refused, because DNS cannot show a login page. In production, add a DNS-only policy without groups above this one.', check: (x) => Object.values(x.rt.lab.auth).some((a) => a.user === 'jsmith' && a.groups.length > 0) && sendOk(x, 'pc1', 'www.example.com') },
-      { title: 'adoe (Engineering) logs in on PC2 and is refused', how: 'Lab > Users: PC2, adoe / Eng123!. Then send PC2 → www.example.com. It must fail.', check: (x) => Object.values(x.rt.lab.auth).some((a) => a.user === 'adoe') && !sendOk(x, 'pc2', 'www.example.com') },
+      { title: 'jsmith logs in on PC1 and can browse', how: 'Lab > Users: PC1, jsmith / Sales123!, Log in. Then in the Traffic Generator send PC1-Admin → www.example.com (HTTPS). Note: before login even DNS is refused, because DNS cannot show a login page. In production, add a DNS-only policy without groups above this one.', check: (x) => Object.values(x.rt.lab.auth).some((a) => a.user === 'jsmith' && a.groups.length > 0) && tested(x, 'pc1', 'www.example.com', 'tcp', WEB, (s) => s.time >= authTime(x, 'jsmith')) },
+      { title: 'adoe (Engineering) logs in on PC2 and is refused', how: 'Lab > Users: PC2, adoe / Eng123!, Log in. Then in the Traffic Generator send PC2-Sales → www.example.com (HTTPS). It must be refused.', check: (x) => Object.values(x.rt.lab.auth).some((a) => a.user === 'adoe') && testedBlocked(x, 'pc2', 'www.example.com', 'tcp', 443, (s) => s.time >= authTime(x, 'adoe')) },
     ],
   },
   {
@@ -300,8 +319,8 @@ export const LABS: Lab[] = [
     startPage: 'vpn-wizard',
     tasks: [
       { title: 'A tunnel to the branch is Up', how: 'VPN > IPsec Wizard (or a custom tunnel). Check VPN > IPsec Tunnels: the Reason column explains failures.', check: (x) => Object.values(x.net.tunnels).some((t) => t.up) },
-      { title: 'PC1 can ping Branch-PC (10.20.0.10)', how: 'Needs a route to 10.20.0.0/24 via the tunnel and a policy internal → tunnel (NAT off).', check: (x) => sendOk(x, 'pc1', '10.20.0.10', 'icmp', 0) },
-      { title: 'Branch-PC can RDP to PC1', how: 'Needs the policy tunnel → internal.', check: (x) => sendOk(x, 'branchpc', '192.168.1.110', 'tcp', 3389) },
+      { title: 'PC1 can ping Branch-PC (10.20.0.10)', how: 'Needs a route to 10.20.0.0/24 via the tunnel and a policy internal → tunnel (NAT off). Then test it: Traffic Generator quick test "PC1 pings Branch-PC" (PC1-Admin → 10.20.0.10, Ping).', check: (x) => tested(x, 'pc1', '10.20.0.10', 'icmp', 0) },
+      { title: 'Branch-PC can RDP to PC1', how: 'Needs the policy tunnel → internal. Then test it: in the Traffic Generator send Branch-PC → 192.168.1.110, RDP (TCP/3389).', check: (x) => tested(x, 'branchpc', '192.168.1.110', 'tcp', 3389) },
       { title: 'A blackhole route stops branch traffic leaking to the internet if the tunnel drops', how: 'Network > Static Routes: 10.20.0.0/24, Interface Blackhole, distance 254 (the wizard adds it for you).', check: (x) => x.net.routes.some((r) => r.blackhole && r.net === ipToInt('10.20.0.0') && r.prefix === 24) },
     ],
   },
@@ -320,7 +339,7 @@ export const LABS: Lab[] = [
       { title: 'An authentication rule maps that group to a tunnel-mode portal', how: 'VPN > SSL-VPN Settings > Authentication/Portal Mapping > Create New: your group, portal tunnel-access. That portal uses split tunneling, so only office traffic goes through the VPN and the laptop reaches the internet directly.', check: (x) => sslRuleGroups(x.c).some((g) => vpnGroups(x.c).includes(g)) },
       { title: 'A policy ssl.root → internal allows that group', how: 'Firewall Policy > Create New: Incoming SSL-VPN tunnel interface (ssl.root), Outgoing internal, Source all + your group, Destination the office LAN, Service ALL, ACCEPT.', check: (x) => pols(x.c).some((p) => p.action === 'accept' && p.srcintf.includes('ssl.root') && p.dstintf.includes('internal') && p.groups.some((g) => sslRuleGroups(x.c).includes(g))) },
       { title: 'Remote-Laptop is connected with FortiClient', how: 'Lab > VPN: connect Remote-Laptop to 203.0.113.10 on your SSL-VPN port with the local user.', check: (x) => !!x.rt.lab.sslClients?.laptop },
-      { title: 'Remote-Laptop can RDP to PC1 through the tunnel', how: 'Send Remote-Laptop → 192.168.1.110 TCP/3389.', check: (x) => sendOk(x, 'laptop', '192.168.1.110', 'tcp', 3389) },
+      { title: 'Remote-Laptop can RDP to PC1 through the tunnel', how: 'Traffic Generator: click the quick test "Remote-Laptop RDP to PC1" (Remote-Laptop → 192.168.1.110, RDP TCP/3389).', check: (x) => tested(x, 'laptop', '192.168.1.110', 'tcp', 3389) },
     ],
   },
   {
@@ -336,9 +355,9 @@ export const LABS: Lab[] = [
     tasks: [
       { title: 'SD-WAN is enabled with wan1 and wan2 as members', how: '1) Network > SD-WAN: enable SD-WAN and add wan2 (gateway 198.18.10.1). 2) Firewall Policy: change policies 1 and 3 (Outgoing) and policy 2 (Incoming, the website) from wan1 to virtual-wan-link. FortiOS will not add an interface to SD-WAN while policies use it directly. 3) Back in SD-WAN, add wan1 (gateway 203.0.113.1).', check: (x) => x.net.sdwan.enabled && ['wan1', 'wan2'].every((i) => x.net.sdwan.members.some((m) => m.intf === i)) },
       { title: 'Policy 1 goes out the SD-WAN zone and a default route points to it', how: 'Edit policy 1: Outgoing interface virtual-wan-link. Static Routes: 0.0.0.0/0, Interface = SD-WAN zone virtual-wan-link.', check: (x) => policies(x.c).find((p) => p.id === '1')?.dstintf.includes('virtual-wan-link') === true && entries(x.c, 'router static').some((e) => list(def('router static'), e.f, 'sdwan-zone').length > 0) },
-      { title: 'Internet-User can still reach the website', how: 'Quick test "Internet user visits your website" (before switching on the ISP1 outage).', check: (x) => policies(x.c).find((p) => p.id === '2')?.srcintf.includes('virtual-wan-link') === true && (x.rt.lab.ispDown?.wan1 ? x.rt.history.some((h) => h.ok && /Web-Server TCP\/80/.test(h.summary)) : sendOk(x, 'user', '203.0.113.10', 'tcp', 80)) },
+      { title: 'Internet-User can still reach the website', how: 'Before switching on the ISP1 outage, click the Traffic Generator quick test "Internet user visits your website" (Internet-User → 203.0.113.10, HTTP).', check: (x) => policies(x.c).find((p) => p.id === '2')?.srcintf.includes('virtual-wan-link') === true && (x.rt.lab.ispDown?.wan1 ? (x.rt.sent ?? []).some((s) => s.ok && s.src === 'user' && s.dst === '203.0.113.10' && s.proto === 'tcp' && s.dport === 80 && !duringOutage(s)) : tested(x, 'user', '203.0.113.10', 'tcp', 80)) },
       { title: 'A Performance SLA probes an internet server (not the ISP gateway)', how: 'Performance SLAs > Create New: server 8.8.8.8, both members.', check: (x) => x.net.sdwan.health.some((h) => h.members.length >= 2 && !/203\.0\.113\.1|198\.18\.10\.1/.test(h.server)) },
-      { title: 'With an ISP1 outage, PC1 still reaches 8.8.8.8', how: 'Lab > WAN: switch on "ISP1 outage", then ping 8.8.8.8 from PC1.', check: (x) => !!x.rt.lab.ispDown?.wan1 && sendOk(x, 'pc1', '8.8.8.8', 'icmp', 0) },
+      { title: 'With an ISP1 outage, PC1 still reaches 8.8.8.8', how: 'Lab > WAN: switch on "ISP1 outage". Then send PC1-Admin → 8.8.8.8, Ping (Traffic Generator quick test "PC1 pings 8.8.8.8").', check: (x) => !!x.rt.lab.ispDown?.wan1 && tested(x, 'pc1', '8.8.8.8', 'icmp', 0, duringOutage) },
     ],
   },
   {
@@ -354,7 +373,7 @@ export const LABS: Lab[] = [
       { title: 'BGP session with the ISP is Established', how: 'Network > BGP: Local AS 65010, neighbor 203.0.113.1 remote AS 64500.', check: (x) => x.net.bgp.neighbors.some((n) => n.state === 'Established') },
       { title: 'OSPF neighbor 10.20.0.1 is Full', how: 'Give tunnel to-branch IP 169.254.1.1/32 with remote IP 169.254.1.2/30 (Network > Interfaces), then OSPF: area 0.0.0.0, network 169.254.1.0/30.', check: (x) => x.net.ospf.neighbors.some((n) => n.state === 'Full') },
       { title: '10.20.0.0/24 is now learned by OSPF (static route removed)', how: 'Delete the static route to 10.20.0.0/24 via the tunnel. Static (distance 10) beats OSPF (110), so the OSPF route only becomes active without it. Keep the blackhole.', check: (x) => routeActive(x, '10.20.0.0/24', 'ospf') },
-      { title: 'PC1 still reaches Branch-PC', how: 'Ping 10.20.0.10 from PC1.', check: (x) => sendOk(x, 'pc1', '10.20.0.10', 'icmp', 0) },
+      { title: 'PC1 still reaches Branch-PC', how: 'After the static route is gone, send PC1-Admin → 10.20.0.10, Ping (Traffic Generator quick test "PC1 pings Branch-PC"). The Packet Walk shows the OSPF route.', check: (x) => tested(x, 'pc1', '10.20.0.10', 'icmp', 0, (s) => s.route.startsWith('OSPF')) },
     ],
   },
 
@@ -371,7 +390,7 @@ export const LABS: Lab[] = [
       patchPolicy(c, '1', { nat: 'disable' });
       return c;
     },
-    tasks: [{ title: 'PC1 can browse www.example.com', how: 'Reproduce from the Traffic Generator and read where it fails.', check: (x) => sendOk(x, 'pc1', 'www.example.com') }],
+    tasks: [{ title: 'PC1 can browse www.example.com', how: 'Reproduce it with the Traffic Generator quick test "PC1 browses www.example.com" and read where it fails. After the fix, send it again: the tick needs a successful test.', check: (x) => tested(x, 'pc1', 'www.example.com') }],
     hints: ['The request leaves the FortiGate. What source address does it have on the internet?', 'Look at the "Source NAT" step in the Packet Walk.', 'Private addresses (192.168.x.x) cannot receive replies from the internet.'],
     solution: ['Edit policy 1 (LAN-to-Internet).', 'Turn NAT on (Use Outgoing Interface Address).', 'OK, then test again.'],
   },
@@ -387,7 +406,7 @@ export const LABS: Lab[] = [
       patchPolicy(c, '1', { service: ['HTTP', 'HTTPS', 'PING'] });
       return c;
     },
-    tasks: [{ title: 'PC1 can browse www.example.com', how: 'Compare pinging an IP with browsing a name.', check: (x) => sendOk(x, 'pc1', 'www.example.com') }],
+    tasks: [{ title: 'PC1 can browse www.example.com', how: 'In the Traffic Generator, compare pinging an IP with browsing a name. After the fix, send PC1-Admin → www.example.com (HTTPS) again.', check: (x) => tested(x, 'pc1', 'www.example.com') }],
     hints: ['Browsing by name needs something before the HTTPS connection.', 'Look at the [DNS] steps in the Packet Walk.', 'Which service does policy 1 allow?'],
     solution: ['Edit policy 1.', 'Add the service DNS (or use the group Web Access).', 'OK, then test again.'],
   },
@@ -404,7 +423,7 @@ export const LABS: Lab[] = [
       v.f.mappedip = ['10.10.10.11'];
       return c;
     },
-    tasks: [{ title: 'Internet-User reaches http://203.0.113.10', how: 'Use quick test "Internet user visits your website".', check: (x) => sendOk(x, 'user', '203.0.113.10', 'tcp', 80) }],
+    tasks: [{ title: 'Internet-User reaches http://203.0.113.10', how: 'Use the Traffic Generator quick test "Internet user visits your website" (Internet-User → 203.0.113.10, HTTP). After the fix, run it again.', check: (x) => tested(x, 'user', '203.0.113.10', 'tcp', 80) }],
     hints: ['Follow the packet after the Destination NAT step.', 'Which internal address does the VIP translate to?', 'The web server is 10.10.10.10.'],
     solution: ['Policy & Objects > Virtual IPs > VIP-WebServer-HTTP.', 'Map to IPv4 address: 10.10.10.10.', 'OK, then test again.'],
   },
@@ -422,7 +441,7 @@ export const LABS: Lab[] = [
       r.entries[0].f['end-ip'] = '192.168.1.110';
       return c;
     },
-    tasks: [{ title: 'PC2 has an address and can browse', how: 'Check PC2 in the Traffic Generator (its address is shown under Source).', check: (x) => hostIp(x, 'pc2').startsWith('192.168.1.') && sendOk(x, 'pc2', 'www.example.com') }],
+    tasks: [{ title: 'PC2 has an address and can browse', how: 'Check PC2 in the Traffic Generator (its address is shown under Source). After the fix, send PC2-Sales → www.example.com (HTTPS).', check: (x) => hostIp(x, 'pc2').startsWith('192.168.1.') && tested(x, 'pc2', 'www.example.com') }],
     hints: ['What IP does PC2 have? 169.254.x.x means DHCP failed.', 'Dashboard > Network > DHCP shows the leases.', 'How many addresses does the DHCP range contain?'],
     solution: ['Network > Interfaces > edit internal.', 'DHCP Server address range: 192.168.1.110 - 192.168.1.210.', 'OK, then test again.'],
   },
@@ -435,8 +454,8 @@ export const LABS: Lab[] = [
     intro: 'Since a change last night, HQ and the branch cannot reach each other. Two things are wrong.',
     build: () => vpnBase(starterConfig(), 'Branch-PSK-2025', false),
     tasks: [
-      { title: 'PC1 can ping Branch-PC', how: 'Start with VPN > IPsec Tunnels: is the tunnel up?', check: (x) => sendOk(x, 'pc1', '10.20.0.10', 'icmp', 0) },
-      { title: 'Branch-PC can RDP to PC1', how: 'Test the reverse direction too.', check: (x) => sendOk(x, 'branchpc', '192.168.1.110', 'tcp', 3389) },
+      { title: 'PC1 can ping Branch-PC', how: 'Start with VPN > IPsec Tunnels: is the tunnel up? After the fix, send PC1-Admin → 10.20.0.10, Ping (Traffic Generator quick test "PC1 pings Branch-PC").', check: (x) => tested(x, 'pc1', '10.20.0.10', 'icmp', 0) },
+      { title: 'Branch-PC can RDP to PC1', how: 'Test the reverse direction too: send Branch-PC → 192.168.1.110, RDP (TCP/3389).', check: (x) => tested(x, 'branchpc', '192.168.1.110', 'tcp', 3389) },
     ],
     hints: ['IPsec Tunnels shows a reason for the tunnel being down. In the CLI, try "diagnose debug application ike -1" and "diagnose debug enable".', 'Compare the pre-shared key with Lab > VPN.', 'Once the tunnel is up, check the routing table for 10.20.0.0/24.'],
     solution: ['Edit tunnel to-branch: pre-shared key Branch-PSK-2026.', 'Network > Static Routes > Create New: 10.20.0.0/24, Interface to-branch.', 'Test both directions.'],
@@ -451,7 +470,7 @@ export const LABS: Lab[] = [
     build: () => sdwanBase(starterConfig(), 'gateways'),
     lab: { wan2Cable: true, ispDown: { wan1: true } },
     startPage: 'net-sdwan',
-    tasks: [{ title: 'During the ISP1 outage, PC1 reaches 8.8.8.8', how: 'Keep the outage on (Lab > WAN) while you fix it.', check: (x) => !!x.rt.lab.ispDown?.wan1 && sendOk(x, 'pc1', '8.8.8.8', 'icmp', 0) }],
+    tasks: [{ title: 'During the ISP1 outage, PC1 reaches 8.8.8.8', how: 'Keep the outage on (Lab > WAN) while you fix it. Then send PC1-Admin → 8.8.8.8, Ping (Traffic Generator quick test "PC1 pings 8.8.8.8").', check: (x) => !!x.rt.lab.ispDown?.wan1 && tested(x, 'pc1', '8.8.8.8', 'icmp', 0, duringOutage) }],
     hints: ['Network > SD-WAN > Performance SLAs: is wan1 alive or dead?', 'What server is the health check probing? Is it beyond the ISP?', 'Also check which members the health check probes.'],
     solution: ['Performance SLAs: set the server to 8.8.8.8.', 'Make both wan1 and wan2 participants.', 'Apply, then test again.'],
   },
@@ -470,8 +489,8 @@ export const LABS: Lab[] = [
     },
     startPage: 'net-static',
     tasks: [
-      { title: 'Branch-PC can RDP to PC1', how: 'Send Branch-PC → 192.168.1.110 TCP/3389 and read where it is dropped.', check: (x) => sendOk(x, 'branchpc', '192.168.1.110', 'tcp', 3389) },
-      { title: 'PC1 can ping Branch-PC', how: 'Test the reverse direction: PC1 → 10.20.0.10, Ping.', check: (x) => sendOk(x, 'pc1', '10.20.0.10', 'icmp', 0) },
+      { title: 'Branch-PC can RDP to PC1', how: 'In the Traffic Generator send Branch-PC → 192.168.1.110, RDP (TCP/3389) and read where it is dropped. After the fix, send it again.', check: (x) => tested(x, 'branchpc', '192.168.1.110', 'tcp', 3389) },
+      { title: 'PC1 can ping Branch-PC', how: 'Test the reverse direction: PC1-Admin → 10.20.0.10, Ping (quick test "PC1 pings Branch-PC").', check: (x) => tested(x, 'pc1', '10.20.0.10', 'icmp', 0) },
     ],
     hints: ['Look at the Packet Walk (or "diagnose debug flow" in the CLI): it says "reverse path check fail, drop".', 'Which route does the FortiGate use to reach 10.20.0.10? Check Dashboard > Network > Routing or "get router info routing-table all".', 'The route back to the branch must point into the tunnel, not out to the internet.'],
     solution: ['Network > Static Routes > edit the 10.20.0.0/24 route that uses wan1.', 'Interface: to-branch (no gateway).', 'OK, then test both directions.'],
@@ -491,11 +510,7 @@ export function evaluateLab(lab: Lab, c: Config, rt: Runtime): boolean[] {
   });
 }
 
-// "CLI was used" checks read the CLI history without importing the CLI module (avoids a cycle).
-let cliHistory: () => string[] = () => [];
-export const setCliHistorySource = (f: () => string[]) => {
-  cliHistory = f;
-};
-function cliRan(re: RegExp) {
-  return cliHistory().some((l) => re.test(l.trim()));
+// "CLI was used" checks read the read-only CLI commands the store keeps in runtime.cli (persisted, reset when a lab starts).
+function cliRan(x: CheckCtx, re: RegExp) {
+  return (x.rt.cli ?? []).some((l) => re.test(l.trim()));
 }

@@ -12,7 +12,7 @@ export function LabGuide() {
   const [tick, recheck] = useReducer((x: number) => x + 1, 0);
   const [restart, setRestart] = useState(false);
   const lab = LABS.find((l) => l.id === training.active);
-  const results = useMemo(() => (lab ? evaluateLab(lab, config, rt) : []), [lab, config, rt.lab, rt.history, rt.trafficLogs, tick]); // eslint-disable-line
+  const results = useMemo(() => (lab ? evaluateLab(lab, config, rt) : []), [lab, config, rt.lab, rt.sent, rt.cli, rt.trafficLogs, tick]); // eslint-disable-line
   const allDone = results.length > 0 && results.every(Boolean);
   const completed = lab ? !!training.completed[lab.id] : false;
 

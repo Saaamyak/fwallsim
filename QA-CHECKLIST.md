@@ -1,6 +1,6 @@
 # FWallSim v1.0.0 – Manual QA checklist
 
-Automated: `npm test` runs the typecheck, the engine regression suite (64 checks, including CLI robustness and value ranges), lab solvability plus backup/restore round trip (20 labs) and the browser tests (45 Playwright tests in Chromium, including phone and tablet sizes, including a sweep that opens, edits and saves every page on a fresh and on a busy unit). Use this list for a hands-on pass. Start each section from a factory reset (System > Settings > Factory reset) unless noted.
+Automated: `npm test` runs the typecheck, the engine regression suite (72 checks, including CLI robustness and value ranges), lab solvability plus backup/restore round trip (20 labs) and the browser tests (46 Playwright tests in Chromium, including phone and tablet sizes, including a sweep that opens, edits and saves every page on a fresh and on a busy unit). Use this list for a hands-on pass. Start each section from a factory reset (System > Settings > Factory reset) unless noted.
 
 ## 1. Login and shell
 - [ ] First visit (private window): Welcome screen with the "not affiliated with Fortinet" notice → Get started → Create your admin password → empty and mismatch errors shown → Save and log in → Dashboard opens. Reload after logout: no Welcome again.
@@ -53,7 +53,9 @@ Automated: `npm test` runs the typecheck, the engine regression suite (64 checks
 - [ ] Idle timeout (5 min default) logs you out.
 
 ## 8. Training
-- [ ] Labs → Start "Your first firewall policy" (admins are kept) → guide shows 0/4 → tasks tick live → "Lab complete!" → progress 1/20.
+- [ ] Labs → Start "Your first firewall policy" (admins are kept) → guide shows 0/4 → build the policy with NAT → 2/4 (the two traffic tasks wait) → Traffic Generator quick tests "PC1 pings 8.8.8.8" and "PC1 browses www.example.com" → 4/4 → "Lab complete!" → progress 1/20.
+- [ ] A traffic task does not tick from a test sent before the fix (it was blocked), and un-ticks if you break the config again.
+- [ ] Lab "System basics": run `get system status` in the CLI → task ticks → reload the page / open a new tab and log in → still ticked.
 - [ ] A challenge: hints reveal 1 → 2 → 3 → solution.
 - [ ] Exit lab keeps the config. Restart reloads the lab start.
 

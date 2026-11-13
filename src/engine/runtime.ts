@@ -118,6 +118,20 @@ export interface IfStats {
   txP: number;
 }
 
+/** Traffic the learner sent from the Lab panel (Traffic Generator, quick tests, WAN/VPN tools). Lab tasks read it. */
+export interface SentTest {
+  id: number; // the SimResult id
+  time: number;
+  src: string; // lab host id
+  dst: string; // as typed, lower case (name or IP)
+  proto: string;
+  dport: number;
+  ok: boolean;
+  srcIp: string; // the source host's address at that moment
+  route: string; // the route the FortiGate used (empty for traffic to the FortiGate itself)
+  outage: string[]; // ISP outages switched on at that moment (Lab > WAN)
+}
+
 export interface Runtime {
   bootTime: number;
   sessions: Session[];
@@ -131,6 +145,8 @@ export interface Runtime {
   adminLock: Record<string, { fails: number; until: number }>; // per source IP
   syslog: string[]; // lines received by the lab syslog server (newest first)
   firmware: { version: string; build: string };
+  sent: SentTest[]; // newest first, last 30
+  cli: string[]; // recent read-only CLI commands (get/show/diagnose), newest first, last 20
 }
 
 export function emptyRuntime(): Runtime {
@@ -147,6 +163,8 @@ export function emptyRuntime(): Runtime {
     adminLock: {},
     syslog: [],
     firmware: { version: '7.4.4', build: '2662' },
+    sent: [],
+    cli: [],
   };
 }
 

@@ -22,7 +22,7 @@ FWallSim is a single-page web app: React 18 + TypeScript, built with Vite 5. The
 | What | Where it lives | Who can see it | How it goes away |
 |---|---|---|---|
 | The firewall configuration (policies, addresses, interfaces, VPNs, admins and their passwords, local users) | The visitor's browser, `localStorage` key `fwallsim.config.v1` | Only that browser on that computer | Factory reset, or clearing the site data in the browser |
-| Runtime: sessions, traffic and event logs, counters, lab state (cables, ISP outages, logged-in lab users), lockouts, firmware version | `localStorage` `fwallsim.runtime.v1` (only the last 10 traffic results are kept) | Only that browser | Factory reset, Clear logs, or clearing site data |
+| Runtime: sessions, traffic and event logs, counters, lab state (cables, ISP outages, logged-in lab users), your recent lab test traffic and read-only CLI commands, lockouts, firmware version | `localStorage` `fwallsim.runtime.v1` (only the last 10 traffic results are kept) | Only that browser | Factory reset, Clear logs, or clearing site data |
 | Screen state: current page, Lab panel size and tab, sidebar | `localStorage` `fwallsim.ui.v1` | Only that browser | Clearing site data |
 | Training progress: finished labs, hints shown, active lab | `localStorage` `fwallsim.training.v1` | Only that browser | **Reset progress** on the Training page, or clearing site data. A factory reset keeps it. |
 | Welcome screen already seen | `localStorage` `fwallsim.welcomed.v1` | Only that browser | Clearing site data (a factory reset keeps it) |
@@ -119,7 +119,7 @@ One state object, read in React with `useSyncExternalStore` (`useStore(selector)
 | Part | Saved in | Contents |
 |---|---|---|
 | `config` | localStorage | the FortiOS-style configuration |
-| `runtime` | localStorage | sessions, logs, history, lab state, lockouts, firmware |
+| `runtime` | localStorage | sessions, logs, history, lab state, learner test traffic (`sent`), lab CLI evidence (`cli`), lockouts, firmware |
 | `ui` | localStorage | current page, dock size/tab, sidebar |
 | `training` | localStorage | completed labs, hints shown, active lab |
 | `auth` | sessionStorage | who is logged in (a new browser session asks again) |
@@ -148,7 +148,7 @@ Key actions: `updateConfig` (GUI saves, checks permissions), `commitConfig` (CLI
 
 ## 6. Training (labs/labs.ts)
 
-Each lab: `id`, `title`, `level`, `minutes`, `topic`, `intro`, `build()` (start config), optional `lab` (cables, outages), `startPage`, and `tasks` (`title`, `how`, `check(ctx)`). Checks inspect the config and send **real simulated traffic** (`ctx.send`), so a task only turns green when it truly works. Challenges add `hints` and a `solution`. The Lab Guide re-checks on every change and every few seconds (for CLI-only changes).
+Each lab: `id`, `title`, `level`, `minutes`, `topic`, `intro`, `build()` (start config), optional `lab` (cables, outages), `startPage`, and `tasks` (`title`, `how`, `check(ctx)`). Checks inspect the config and send **real simulated traffic** (`ctx.send`), so a task only turns green when it truly works. Tasks that ask the learner to test something ("PC1 can ping 8.8.8.8") also need that test to have been sent from the Lab panel: `sendTraffic()` in the store keeps the last 30 learner-sent results in `runtime.sent` (source, destination, protocol/port, allowed or blocked, source IP, route used, ISP outages at that moment). The `tested()` / `testedBlocked()` helpers pass only if the learner's latest matching test had the expected result **and** the current config still gives that result, so a test sent before the fix never counts and breaking the config afterwards un-ticks the task. Lab 1's CLI task reads `runtime.cli`, the last read-only CLI commands (`get`/`show`/`diagnose` only, never `set`). Both are reset when a lab starts or restarts. Challenges add `hints` and a `solution`. The Lab Guide re-checks on every change and every few seconds (for CLI-only changes).
 
 ## 7. Tests
 

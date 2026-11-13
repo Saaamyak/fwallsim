@@ -7,6 +7,7 @@ import { parseConfigText, serializeConfig } from '../src/engine/serialize';
 import { starterConfig } from '../src/engine/defaults';
 import { sha256 } from '../src/engine/sha256';
 import { isPwHash } from '../src/engine/admin';
+import { LABS, evaluateLab } from '../src/labs/labs';
 
 let failed = 0;
 let passed = 0;
@@ -217,6 +218,34 @@ section('SD-WAN member still used by policies (CLI matches GUI)');
   check('wan1 accepted once policies use the SD-WAN zone', members().includes('wan1') && members().includes('wan2'), members().join(','));
   run('config system sdwan', 'config members', 'edit 2', 'set gateway 203.0.113.1', 'next', 'end', 'end');
   check('editing an existing member is not refused', !cli.out.slice(-3).join(' ').includes('is used by'));
+}
+
+section('lab traffic tasks need real test traffic');
+{
+  const l2 = LABS.find((l) => l.id === 'l2-first-policy')!;
+  const evalL2 = () => { const s = store.getState(); return evaluateLab(l2, s.config, s.runtime); };
+  store.startLab('l2-first-policy');
+  send('pc1', '8.8.8.8', 'icmp', 0); // before the policy exists: denied, must not count later
+  run('config firewall policy', 'edit 0', 'set srcintf internal', 'set dstintf wan1', 'set srcaddr all', 'set dstaddr all', 'set schedule always', 'set service ALL', 'set action accept', 'set nat enable', 'next', 'end');
+  let r = evalL2();
+  check('config right: policy tasks tick', r[0] && r[1], r.join(','));
+  check('config right but no successful test: ping task does NOT tick', !r[2], r.join(','));
+  check('config right but no test: browse task does NOT tick', !r[3], r.join(','));
+  send('pc1', '8.8.8.8', 'icmp', 0);
+  send('pc1', 'www.example.com');
+  r = evalL2();
+  check('after the learner sends the traffic, both traffic tasks tick', r[2] && r[3], r.join(','));
+  run('config firewall policy', 'edit 1', 'set nat disable', 'next', 'end');
+  check('breaking the config afterwards un-ticks the traffic task', !evalL2()[2]);
+  store.startLab('l2-first-policy');
+  check('restarting the lab forgets old test traffic', store.getState().runtime.sent.length === 0);
+  const l1 = LABS.find((l) => l.id === 'l1-basics')!;
+  store.startLab('l1-basics');
+  run('get system status');
+  const s1 = store.getState();
+  check('lab 1 CLI task is kept in runtime (persisted), not only in the CLI session', s1.runtime.cli.some((l) => /^get system status/.test(l)) && evaluateLab(l1, s1.config, s1.runtime)[3]);
+  run('config system global', 'set hostname X', 'end');
+  check('set commands are not stored as CLI evidence', !store.getState().runtime.cli.some((l) => l.startsWith('set')));
 }
 
 console.log(`\n${passed} passed, ${failed} failed`);
